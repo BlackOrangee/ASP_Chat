@@ -6,8 +6,9 @@ namespace ASP_Chat.Service
     public interface IUserService
     {
         User GetUserById(long id);
-        Collection<User> GetUsersByUsername(string username);
-        User UpdateUser(long id, string? username, string? password, string? name, string? description, string? image);
+        User? GetUserByUsername(string username);
+        HashSet<User> GetUsersByUsername(string username);
+        User UpdateUser(long id, string? username, string? name, string? description);
         int DeleteUser(long id);
     }
 }

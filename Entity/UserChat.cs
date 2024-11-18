@@ -2,7 +2,7 @@
 {
     public class UserChat
     {
-        public long id {get; set;}
+        public long Id {get; set;}
         public User User {get; set;}
         public Chat Chat {get; set;}
     }
