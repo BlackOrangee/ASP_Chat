@@ -18,7 +18,7 @@ namespace ASP_Chat.Service.Impl
 
         public int DeleteUser(long id)
         {
-            _logger.LogInformation("Deleting user with id: {id}", id);
+            _logger.LogDebug("Deleting user with id: {id}", id);
             var user = _context.Users.FirstOrDefault(u => u.Id == id);
             if (user == null)
             {
@@ -33,7 +33,7 @@ namespace ASP_Chat.Service.Impl
 
         public User GetUserById(long id)
         {
-            _logger.LogInformation("Getting user with id: {id}", id);
+            _logger.LogDebug("Getting user with id: {id}", id);
             User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
             if (user == null)
@@ -48,19 +48,19 @@ namespace ASP_Chat.Service.Impl
 
         public User? GetUserByUsername(string username)
         {
-            _logger.LogInformation("Getting user with username: {username}", username);
+            _logger.LogDebug("Getting user with username: {username}", username);
             return _context.Users.FirstOrDefault(u => u.Username == username);
         }
 
         public HashSet<User> GetUsersByUsername(string username)
         {
-            _logger.LogInformation("Getting users with same username: {username}", username);
+            _logger.LogDebug("Getting users with same username: {username}", username);
             return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
         }
 
         public User UpdateUser(long id, string? username, string? name, string? description)
         {
-            _logger.LogInformation("Updating user with id: {id}", id);
+            _logger.LogDebug("Updating user with id: {id}", id);
             User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
             if (user == null)
