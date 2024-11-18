@@ -50,20 +50,20 @@ namespace ASP_Chat.Service.Impl
 
         public string Login(string username, string password)
         {
-            _logger.LogInformation($"Username: {username}. Try to login.");
+            _logger.LogDebug($"Username: {username}. Try to login.");
 
             User? user = _userService.GetUserByUsername(username);
 
             if (user == null)
             {
-                throw new CustomException($"User with this username {username} not found", 
-                    CustomException.ExceptionCodes.UserNotFound, 
+                throw new CustomException($"Wrong username or password",
+                    CustomException.ExceptionCodes.InvalidCredentials, 
                     CustomException.StatusCodes.BadRequest);
             }
 
             if (_passwordHasher.VerifyHashedPassword(user, user.Password, password) == PasswordVerificationResult.Failed)
             { 
-                throw new CustomException("Invalid password", 
+                throw new CustomException("Wrong username or password", 
                     CustomException.ExceptionCodes.InvalidCredentials, 
                     CustomException.StatusCodes.BadRequest);
             }
@@ -73,7 +73,7 @@ namespace ASP_Chat.Service.Impl
 
         public string Register(string username, string password)
         {
-            _logger.LogInformation($"Username: {username}. Try to register.");
+            _logger.LogDebug($"Username: {username}. Try to register.");
 
             User? user = _userService.GetUserByUsername(username);
 
@@ -95,7 +95,7 @@ namespace ASP_Chat.Service.Impl
 
         public string ChangePassword(long userId, string oldPassword, string newPassword)
         {
-            _logger.LogInformation($"UserId: {userId}. Try to change password.");
+            _logger.LogDebug($"UserId: {userId}. Try to change password.");
 
             User user = _userService.GetUserById(userId);
 

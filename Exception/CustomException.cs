@@ -7,7 +7,8 @@
         public enum ExceptionCodes {
             UserNotFound = 1,
             UserAlreadyExists = 2,
-            InvalidCredentials = 3
+            InvalidCredentials = 3,
+            ChatTypeNotFound = 4
         }
 
         public StatusCodes StatusCode { get; set; }
