@@ -8,9 +8,13 @@
         public enum ExceptionCodes {
             SecretKeyNotSet = 0,
             UserNotFound,
+            UsersNotFound,
             UserAlreadyExists,
-            InvalidCredentials = 3,
-            ChatTypeNotFound = 4
+            InvalidCredentials,
+            ChatTypeNotFound,
+            GroupNameIsEmpty,
+            ChannelNameIsEmpty,
+            ChannelTagIsEmpty,
         }
         
         public enum StatusCodes {
