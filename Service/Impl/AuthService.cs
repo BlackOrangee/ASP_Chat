@@ -29,7 +29,15 @@ namespace ASP_Chat.Service.Impl
             DotNetEnv.Env.Load();
 
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey ?? string.Empty));
+
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new CustomException("JWT secret key is not set",
+                    CustomException.ExceptionCodes.SecretKeyNotSet,
+                    CustomException.StatusCodes.InternalServerError);
+            }
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]

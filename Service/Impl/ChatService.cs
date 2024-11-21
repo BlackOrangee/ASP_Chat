@@ -45,17 +45,109 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<User> usersSet = _context.Users.Where(u => users.Contains(u.Id)).ToHashSet();
 
+            if (usersSet == null || usersSet.Count == 0)
+            {
+                throw new CustomException("No found users to create chat",
+                CustomException.ExceptionCodes.UsersNotFound, 
+                CustomException.StatusCodes.NotFound);
+            }
+
+            // TODO: add media upload
+             Media? imageMedia = new Media();
+
             switch (chatTypeObj.Id)
             {
                 case 1:
                     return CreateP2PChat(admin, usersSet.First(), chatTypeObj);
                 case 2:
-                    return CreateGroupChat(admin, usersSet, chatTypeObj);
+                    return CreateGroupChat(admin, usersSet, chatTypeObj, name, description, imageMedia);
                 case 3:
-                    return CreateChannel(admin, usersSet, chatTypeObj);
+                    return CreateChannel(admin, usersSet, chatTypeObj, tag, name, description, imageMedia);
             }
 
             throw new NotImplementedException();
+        }
+
+        private Chat CreateChannel(User admin, HashSet<User> users, ChatType chatType,
+            string? tag, string? name, string? description, Media? image)
+        {
+            if (name == null || string.IsNullOrEmpty(name))
+            {
+                throw new CustomException("Channel name is empty",
+                    CustomException.ExceptionCodes.ChannelNameIsEmpty,
+                    CustomException.StatusCodes.BadRequest);
+            }
+
+            if (description == null || string.IsNullOrEmpty(description))
+            {
+                description = "Channel description";
+            }
+
+            if (tag == null || string.IsNullOrEmpty(tag))
+            {
+                throw new CustomException("Channel tag is empty",
+                    CustomException.ExceptionCodes.ChannelTagIsEmpty,
+                    CustomException.StatusCodes.BadRequest);
+            }
+
+            Chat chat = new Chat()
+            {
+                Type = chatType,
+                Admin = admin,
+                Tag = tag,
+                Name = name,
+                Description = description,
+                Image = image
+            };
+
+            _context.Chats.Add(chat);
+            _context.SaveChanges();
+
+            _context.UserChats.Add(new UserChat { Chat = chat, User = admin });
+
+            foreach (User user in users)
+            {
+                _context.UserChats.Add(new UserChat { Chat = chat, User = user });
+            }
+            _context.SaveChanges();
+            return chat;
+        }
+
+        private Chat CreateGroupChat(User admin, HashSet<User> users, ChatType chatType,
+            string? name, string? description, Media? image)
+        {
+            if (name == null || string.IsNullOrEmpty(name))
+            {
+                throw new CustomException("Group name is empty",
+                    CustomException.ExceptionCodes.GroupNameIsEmpty,
+                    CustomException.StatusCodes.BadRequest);
+            }
+
+            if (description == null || string.IsNullOrEmpty(description))
+            {
+                description = "Group description";
+            }
+
+            Chat chat = new Chat()
+            {
+                Type = chatType,
+                Admin = admin,
+                Name = name,
+                Description = description,
+                Image = image
+            };
+
+            _context.Chats.Add(chat);
+            _context.SaveChanges();
+
+            _context.UserChats.Add(new UserChat { Chat = chat, User = admin });
+
+            foreach (User user in users)
+            {
+                _context.UserChats.Add(new UserChat { Chat = chat, User = user });
+            }
+            _context.SaveChanges();
+            return chat;
         }
 
         private Chat CreateP2PChat(User admin, User user, ChatType chatType)
@@ -64,10 +156,6 @@ namespace ASP_Chat.Service.Impl
             {
                 Type = chatType,
                 Admin = admin,
-                Tag = user.Username,
-                Name = user.Name,
-                Description = user.Description,
-                Image = user.Image,
             };
 
             _context.Chats.Add(chat);

@@ -33,6 +33,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
+var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
+
+if (string.IsNullOrEmpty(secretKey))
+{
+    throw new CustomException("JWT secret key is not set",
+        CustomException.ExceptionCodes.SecretKeyNotSet,
+        CustomException.StatusCodes.InternalServerError);
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -41,13 +50,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
+        //ValidateIssuer = true,
+        //ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         //ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
         //ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? ""))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
 

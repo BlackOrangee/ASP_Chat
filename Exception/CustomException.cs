@@ -3,15 +3,15 @@
     public class CustomException : System.Exception
     {
         public ExceptionCodes Code { get; set; }
+        public StatusCodes StatusCode { get; set; }
 
         public enum ExceptionCodes {
-            UserNotFound = 1,
-            UserAlreadyExists = 2,
+            SecretKeyNotSet = 0,
+            UserNotFound,
+            UserAlreadyExists,
             InvalidCredentials = 3,
             ChatTypeNotFound = 4
         }
-
-        public StatusCodes StatusCode { get; set; }
         
         public enum StatusCodes {
             BadRequest = 400,
