@@ -8,5 +8,9 @@
         public string Password { get; set; }
         public string? Description { get; set; }
         public Media? Image { get; set; }
+        public ICollection<Chat> AdminedChats { get; set; } = new HashSet<Chat>();
+        public ICollection<Chat> ModeratedChats { get; set; } = new HashSet<Chat>();
+        public ICollection<Chat> Chats { get; set; } = new HashSet<Chat>();
+        public ICollection<Message> Messages { get; set; } = new HashSet<Message>();
     }
 }
