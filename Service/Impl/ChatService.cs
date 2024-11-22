@@ -10,18 +10,24 @@ namespace ASP_Chat.Service.Impl
     {
         private ApplicationDBContext _context;
         private readonly ILogger<ChatService> _logger;
+        private readonly IUserService _userService;
 
-        public ChatService(ApplicationDBContext context, ILogger<ChatService> logger)
+        public ChatService(ApplicationDBContext context, ILogger<ChatService> logger, IUserService userService)
         {
             _context = context;
             _logger = logger;
+            _userService = userService;
         }
 
-        public string AddModeratorToChat(long adminId, ICollection<long> userIds, long chatId)
-        {
-            _logger.LogDebug("Adding moderators to chat: {chatId}", chatId);
+        private enum EChatType {
+            P2P = 1, 
+            Group = 2, 
+            Channel = 3 
+        };
 
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
+        private Chat GetChat(long id)
+        {
+            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == id);
             if (chat == null)
             {
                 throw new CustomException("Chat not found",
@@ -29,20 +35,23 @@ namespace ASP_Chat.Service.Impl
                 CustomException.StatusCodes.NotFound);
             }
 
-            if (chat.Type.Id == 1)
+            return chat;
+        }
+
+        public string AddModeratorToChat(long adminId, ICollection<long> userIds, long chatId)
+        {
+            _logger.LogDebug("Adding moderators to chat: {chatId}", chatId);
+
+            Chat? chat = GetChat(chatId);
+
+            if (chat.Type.Id == (long)EChatType.P2P)
             {
                 throw new CustomException("P2P chat can't have moderators",
                 CustomException.ExceptionCodes.ChatCanNotHaveModerators,
                 CustomException.StatusCodes.BadRequest);
             }
 
-            User? admin = _context.Users.FirstOrDefault(u => u.Id == adminId);
-            if (admin == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User admin = _userService.GetUserById(adminId);
 
             HashSet<User> usersSet = _context.Users.Where(u => userIds.Contains(u.Id)).ToHashSet();
 
@@ -102,28 +111,16 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Adding users to chat: {chatId}", chatId);
 
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
-            if (chat == null)
-            {
-                throw new CustomException("Chat not found",
-                CustomException.ExceptionCodes.ChatNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == 1)
+            if (chat.Type.Id == (long)EChatType.P2P)
             {
                 throw new CustomException("P2P chat can't have morer users",
                 CustomException.ExceptionCodes.ChatCanNotHaveUsers,
                 CustomException.StatusCodes.BadRequest);
             }
 
-            User? chatUser = _context.Users.FirstOrDefault(u => u.Id == chatUserId);
-            if (chatUser == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User chatUser = _userService.GetUserById(chatUserId);
 
             HashSet<User> usersSet = _context.Users.Where(u => userIds.Contains(u.Id)).ToHashSet();
 
@@ -168,13 +165,7 @@ namespace ASP_Chat.Service.Impl
             string? tag, string? name, string? description, string? image)
         {
             _logger.LogDebug("Creating chat with admin id: {adminId}", adminId);
-            User? admin = _context.Users.FirstOrDefault(u => u.Id == adminId);
-            if (admin == null)
-            {
-                throw new CustomException("User not found", 
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User admin = _userService.GetUserById(adminId);
 
             ChatType? chatTypeObj = _context.ChatTypes.FirstOrDefault(ct => ct.Id == chatType);
             if (chatTypeObj == null)
@@ -313,21 +304,9 @@ namespace ASP_Chat.Service.Impl
         public Chat GetChatById(long userId, long chatId)
         {
             _logger.LogDebug("Getting chat with id: {chatId}", chatId);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User user = _userService.GetUserById(userId);
 
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
-            if (chat == null)
-            {
-                throw new CustomException("Chat not found",
-                CustomException.ExceptionCodes.ChatNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            Chat? chat = GetChat(chatId);
 
             if (!chat.Users.Contains(user))
             {
@@ -342,30 +321,24 @@ namespace ASP_Chat.Service.Impl
         public ICollection<Chat> GetChatsByName(long userId, string name)
         {
             _logger.LogDebug("Getting chats with name: {name}", name);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User user = _userService.GetUserById(userId);
 
-            HashSet<Chat> userGroupAndChanels = _context.Chats.Where(c => 
-            c.Type.Id != 1 
-            && c.Users.Contains(user) 
-            && c.Name.Contains(name))
-                .ToHashSet();
+            HashSet<Chat> userGroupAndChanels = _context.Chats.Where(
+                    c => c.Type.Id != (long)EChatType.P2P
+                    && c.Users.Contains(user)
+                    && c.Name.Contains(name)
+                ).ToHashSet();
             
-            HashSet<Chat> userPersonalChats = _context.Chats.Where(c => 
-            c.Type.Id == 1 
-            && c.Users.Contains(user) 
-            && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name))
-                .ToHashSet();
+            HashSet<Chat> userPersonalChats = _context.Chats.Where(
+                    c => c.Type.Id == (long)EChatType.P2P
+                    && c.Users.Contains(user)
+                    && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name)
+                ).ToHashSet();
 
-            HashSet<Chat> ChanelsToJoin = _context.Chats.Where(c => 
-            c.Type.Id == 3
-            && c.Name.Contains(name))
-                .ToHashSet();
+            HashSet<Chat> ChanelsToJoin = _context.Chats.Where(
+                    c => c.Type.Id == (long)EChatType.Channel
+                    && c.Name.Contains(name)
+                ).ToHashSet();
 
             return new HashSet<Chat>(userPersonalChats.Concat(
                 userGroupAndChanels.Concat(ChanelsToJoin).ToHashSet()).ToHashSet());
@@ -374,24 +347,18 @@ namespace ASP_Chat.Service.Impl
         public ICollection<Chat> GetChatsByTag(long userId, string tag)
         {
             _logger.LogDebug("Getting chats with tag: {tag}", tag);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User user = _userService.GetUserById(userId);
 
-            HashSet<Chat> userPersonalChats = _context.Chats.Where(c =>
-            c.Type.Id == 1
-            && c.Users.Contains(user)
-            && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag))
-                .ToHashSet();
+            HashSet<Chat> userPersonalChats = _context.Chats.Where(
+                    c => c.Type.Id == (long)EChatType.P2P
+                    && c.Users.Contains(user)
+                    && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag)
+                ).ToHashSet();
 
-            HashSet<Chat> Chanels = _context.Chats.Where(c =>
-            c.Type.Id == 3
-            && c.Tag.Contains(tag))
-                .ToHashSet();
+            HashSet<Chat> Chanels = _context.Chats.Where(
+                    c => c.Type.Id == (long)EChatType.Channel
+                    && c.Tag.Contains(tag)
+                ).ToHashSet();
 
             return new HashSet<Chat>(userPersonalChats.Concat(Chanels).ToHashSet());
         }
@@ -399,13 +366,7 @@ namespace ASP_Chat.Service.Impl
         public ICollection<Chat> GetChatsByUser(long userId)
         {
             _logger.LogDebug("Getting chats with user id: {userId}", userId);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User user = _userService.GetUserById(userId);
 
             return user.Chats;
         }
@@ -414,23 +375,11 @@ namespace ASP_Chat.Service.Impl
             string? description, Media? image)
         {
             _logger.LogDebug("Updating chat with id: {chatId}", chatId);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == adminId);
-            if (user == null)
-            {
-                throw new CustomException("User not found",
-                CustomException.ExceptionCodes.UserNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            User user = _userService.GetUserById(adminId);
 
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
-            if (chat == null)
-            {
-                throw new CustomException("Chat not found",
-                CustomException.ExceptionCodes.ChatNotFound,
-                CustomException.StatusCodes.NotFound);
-            }
+            Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == 1)
+            if (chat.Type.Id == (long)EChatType.P2P)
             {
                 throw new CustomException("P2P chat can't be updated",
                 CustomException.ExceptionCodes.ChatCanNotBeUpdated,
@@ -444,7 +393,7 @@ namespace ASP_Chat.Service.Impl
                 CustomException.StatusCodes.BadRequest);
             }
 
-            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == 3)
+            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == (long)EChatType.Channel)
             {
                 chat.Tag = tag;
             }
