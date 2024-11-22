@@ -18,6 +18,7 @@
             ChatTypeNotFound,
             ChatCanNotHaveUsers,
             ChatCanNotHaveModerators,
+            ChatCanNotBeUpdated,
             GroupNameIsEmpty,
             ChannelNameIsEmpty,
             ChannelTagIsEmpty,

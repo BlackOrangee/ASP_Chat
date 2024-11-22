@@ -1,6 +1,8 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exception;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -162,7 +164,8 @@ namespace ASP_Chat.Service.Impl
             return "Users added successfully";
         }
 
-        public Chat CreateChat(long adminId, ICollection<long>? users, int chatType, string? tag, string? name, string? description, string? image)
+        public Chat CreateChat(long adminId, ICollection<long>? users, int chatType, 
+            string? tag, string? name, string? description, string? image)
         {
             _logger.LogDebug("Creating chat with admin id: {adminId}", adminId);
             User? admin = _context.Users.FirstOrDefault(u => u.Id == adminId);
@@ -207,7 +210,7 @@ namespace ASP_Chat.Service.Impl
         }
 
         private Chat CreateChannel(User admin, HashSet<User> users, ChatType chatType,
-            string? tag, string? name, string? description, Media? image)
+            string? tag, string name, string? description, Media? image)
         {
             _logger.LogDebug("Creating channel with admin id: {adminId}", admin.Id);
             if (name == null || string.IsNullOrEmpty(name))
@@ -253,7 +256,7 @@ namespace ASP_Chat.Service.Impl
         }
 
         private Chat CreateGroupChat(User admin, HashSet<User> users, ChatType chatType,
-            string? name, string? description, Media? image)
+            string name, string? description, Media? image)
         {
             _logger.LogDebug("Creating group with admin id: {adminId}", admin.Id);
             if (name == null || string.IsNullOrEmpty(name))
@@ -307,29 +310,164 @@ namespace ASP_Chat.Service.Impl
             return chat;
         }
 
-        public Chat GetChatById(User user, long id)
+        public Chat GetChatById(long userId, long chatId)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Getting chat with id: {chatId}", chatId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new CustomException("User not found",
+                CustomException.ExceptionCodes.UserNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
+            if (chat == null)
+            {
+                throw new CustomException("Chat not found",
+                CustomException.ExceptionCodes.ChatNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            if (!chat.Users.Contains(user))
+            {
+                throw new CustomException("User is not in this chat",
+                CustomException.ExceptionCodes.UserNotInChat,
+                CustomException.StatusCodes.BadRequest);
+            }
+
+            return chat;
         }
 
-        public HashSet<Chat> GetChatsByName(long userId, string name)
+        public ICollection<Chat> GetChatsByName(long userId, string name)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Getting chats with name: {name}", name);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new CustomException("User not found",
+                CustomException.ExceptionCodes.UserNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            HashSet<Chat> userGroupAndChanels = _context.Chats.Where(c => 
+            c.Type.Id != 1 
+            && c.Users.Contains(user) 
+            && c.Name.Contains(name))
+                .ToHashSet();
+            
+            HashSet<Chat> userPersonalChats = _context.Chats.Where(c => 
+            c.Type.Id == 1 
+            && c.Users.Contains(user) 
+            && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name))
+                .ToHashSet();
+
+            HashSet<Chat> ChanelsToJoin = _context.Chats.Where(c => 
+            c.Type.Id == 3
+            && c.Name.Contains(name))
+                .ToHashSet();
+
+            return new HashSet<Chat>(userPersonalChats.Concat(
+                userGroupAndChanels.Concat(ChanelsToJoin).ToHashSet()).ToHashSet());
         }
 
-        public HashSet<Chat> GetChatsByTag(long userId, string tag)
+        public ICollection<Chat> GetChatsByTag(long userId, string tag)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Getting chats with tag: {tag}", tag);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new CustomException("User not found",
+                CustomException.ExceptionCodes.UserNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            HashSet<Chat> userPersonalChats = _context.Chats.Where(c =>
+            c.Type.Id == 1
+            && c.Users.Contains(user)
+            && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag))
+                .ToHashSet();
+
+            HashSet<Chat> Chanels = _context.Chats.Where(c =>
+            c.Type.Id == 3
+            && c.Tag.Contains(tag))
+                .ToHashSet();
+
+            return new HashSet<Chat>(userPersonalChats.Concat(Chanels).ToHashSet());
         }
 
-        public HashSet<Chat> GetChatsByUser(long userId)
+        public ICollection<Chat> GetChatsByUser(long userId)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Getting chats with user id: {userId}", userId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new CustomException("User not found",
+                CustomException.ExceptionCodes.UserNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            return user.Chats;
         }
 
-        public Chat UpdateChatInfo(long adminId, long chatId, string? tag, string? name, string? description, string? image)
+        public Chat UpdateChatInfo(long adminId, long chatId, string? tag, string? name,
+            string? description, Media? image)
         {
-            throw new NotImplementedException();
+            _logger.LogDebug("Updating chat with id: {chatId}", chatId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == adminId);
+            if (user == null)
+            {
+                throw new CustomException("User not found",
+                CustomException.ExceptionCodes.UserNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == chatId);
+            if (chat == null)
+            {
+                throw new CustomException("Chat not found",
+                CustomException.ExceptionCodes.ChatNotFound,
+                CustomException.StatusCodes.NotFound);
+            }
+
+            if (chat.Type.Id == 1)
+            {
+                throw new CustomException("P2P chat can't be updated",
+                CustomException.ExceptionCodes.ChatCanNotBeUpdated,
+                CustomException.StatusCodes.BadRequest);
+            }
+
+            if (chat.Admin.Id != adminId)
+            {
+                throw new CustomException("User is not admin of this chat",
+                CustomException.ExceptionCodes.UserNotAdmin,
+                CustomException.StatusCodes.BadRequest);
+            }
+
+            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == 3)
+            {
+                chat.Tag = tag;
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                chat.Name = name;
+            }
+
+            if (!string.IsNullOrEmpty(description))
+            {
+                chat.Description = description;
+            }
+
+            if (image != null)
+            {
+                chat.Image = image;
+            }
+
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
+
+            return chat;
         }
     }
 }

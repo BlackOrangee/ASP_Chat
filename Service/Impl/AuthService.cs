@@ -79,7 +79,7 @@ namespace ASP_Chat.Service.Impl
             return GenerateJwtToken(user.Id.ToString());
         }
 
-        public string Register(string username, string password)
+        public string Register(string username, string password, string name)
         {
             _logger.LogDebug($"Username: {username}. Try to register.");
 
@@ -92,7 +92,7 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            User newUser = new User { Username = username };
+            User newUser = new User { Username = username, Name = name };
             newUser.Password = _passwordHasher.HashPassword(newUser, password);
 
             _context.Users.Add(newUser);
