@@ -3,14 +3,26 @@
     public class CustomException : System.Exception
     {
         public ExceptionCodes Code { get; set; }
+        public StatusCodes StatusCode { get; set; }
 
         public enum ExceptionCodes {
-            UserNotFound = 1,
-            UserAlreadyExists = 2,
-            InvalidCredentials = 3
+            SecretKeyNotSet = 0,
+            InvalidCredentials,
+            UserNotFound,
+            UserNotAdmin,
+            UserNotInChat,
+            UserAlreadyExists,
+            UserAlreadyModerator,
+            UsersNotFound,
+            ChatNotFound,
+            ChatTypeNotFound,
+            ChatCanNotHaveUsers,
+            ChatCanNotHaveModerators,
+            ChatCanNotBeUpdated,
+            GroupNameIsEmpty,
+            ChannelNameIsEmpty,
+            ChannelTagIsEmpty,
         }
-
-        public StatusCodes StatusCode { get; set; }
         
         public enum StatusCodes {
             BadRequest = 400,

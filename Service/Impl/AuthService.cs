@@ -29,7 +29,15 @@ namespace ASP_Chat.Service.Impl
             DotNetEnv.Env.Load();
 
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey ?? string.Empty));
+
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new CustomException("JWT secret key is not set",
+                    CustomException.ExceptionCodes.SecretKeyNotSet,
+                    CustomException.StatusCodes.InternalServerError);
+            }
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -50,20 +58,20 @@ namespace ASP_Chat.Service.Impl
 
         public string Login(string username, string password)
         {
-            _logger.LogInformation($"Username: {username}. Try to login.");
+            _logger.LogDebug($"Username: {username}. Try to login.");
 
             User? user = _userService.GetUserByUsername(username);
 
             if (user == null)
             {
-                throw new CustomException($"User with this username {username} not found", 
-                    CustomException.ExceptionCodes.UserNotFound, 
+                throw new CustomException($"Wrong username or password",
+                    CustomException.ExceptionCodes.InvalidCredentials, 
                     CustomException.StatusCodes.BadRequest);
             }
 
             if (_passwordHasher.VerifyHashedPassword(user, user.Password, password) == PasswordVerificationResult.Failed)
             { 
-                throw new CustomException("Invalid password", 
+                throw new CustomException("Wrong username or password", 
                     CustomException.ExceptionCodes.InvalidCredentials, 
                     CustomException.StatusCodes.BadRequest);
             }
@@ -71,9 +79,9 @@ namespace ASP_Chat.Service.Impl
             return GenerateJwtToken(user.Id.ToString());
         }
 
-        public string Register(string username, string password)
+        public string Register(string username, string password, string name)
         {
-            _logger.LogInformation($"Username: {username}. Try to register.");
+            _logger.LogDebug($"Username: {username}. Try to register.");
 
             User? user = _userService.GetUserByUsername(username);
 
@@ -84,7 +92,7 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            User newUser = new User { Username = username };
+            User newUser = new User { Username = username, Name = name };
             newUser.Password = _passwordHasher.HashPassword(newUser, password);
 
             _context.Users.Add(newUser);
@@ -95,7 +103,7 @@ namespace ASP_Chat.Service.Impl
 
         public string ChangePassword(long userId, string oldPassword, string newPassword)
         {
-            _logger.LogInformation($"UserId: {userId}. Try to change password.");
+            _logger.LogDebug($"UserId: {userId}. Try to change password.");
 
             User user = _userService.GetUserById(userId);
 
