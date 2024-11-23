@@ -1,8 +1,5 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exception;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Xml.Linq;
 
 namespace ASP_Chat.Service.Impl
 {
