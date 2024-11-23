@@ -208,12 +208,12 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            if (description == null || string.IsNullOrEmpty(description))
+            if (string.IsNullOrEmpty(description))
             {
                 description = "Channel description";
             }
 
-            if (tag == null || string.IsNullOrEmpty(tag))
+            if (string.IsNullOrEmpty(tag))
             {
                 throw new CustomException("Channel tag is empty",
                     CustomException.ExceptionCodes.ChannelTagIsEmpty,
@@ -254,7 +254,7 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            if (description == null || string.IsNullOrEmpty(description))
+            if (string.IsNullOrEmpty(description))
             {
                 description = "Group description";
             }
