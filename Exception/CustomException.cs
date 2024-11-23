@@ -24,6 +24,7 @@
             ChannelTagIsEmpty,
             MessageNotFound,
             MessageIsEmpty,
+            NoPermissionToSendMessage,
             NoPermissionToEditMessage,
             NoPermissionToDeleteMessage,
         }

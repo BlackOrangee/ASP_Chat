@@ -1,5 +1,6 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exception;
+using ASP_Chat.Enums;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -23,7 +24,10 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Deleting message with id: {messageId}", messageId);
             Message message = GetMessage(userId, messageId);
-            if (message.User.Id != userId)
+            User user = _userService.GetUserById(userId);
+
+            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId) 
+                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
                 throw new CustomException("You have no permission to delete this message",
                 CustomException.ExceptionCodes.NoPermissionToDeleteMessage,
@@ -39,7 +43,10 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Editing message with id: {messageId}", messageId);
             Message message = GetMessage(userId, messageId);
-            if (message.User.Id != userId)
+            User user = _userService.GetUserById(userId);
+
+            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId)
+               || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
                 throw new CustomException("You have no permission to edit this message",
                 CustomException.ExceptionCodes.NoPermissionToEditMessage,
@@ -58,6 +65,14 @@ namespace ASP_Chat.Service.Impl
             Chat chat = _chatService.GetChatById(userId, chatId);
 
             User user = _userService.GetUserById(userId);
+
+            if (chat.Type.Id == (long)EChatType.Channel 
+                && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
+            {
+                throw new CustomException("You have no permission to send messages in this chat",
+                CustomException.ExceptionCodes.NoPermissionToSendMessage,
+                CustomException.StatusCodes.BadRequest);
+            }
 
             if(text == null && file == null)
             {
