@@ -69,7 +69,8 @@ namespace ASP_Chat.Service.Impl
             Message message = new Message() 
             { 
                 User = user,
-                Chat = chat
+                Chat = chat,
+                Date = DateTime.Now
             };
 
             if(text != null)
