@@ -1,13 +1,15 @@
-﻿namespace ASP_Chat.Exception
+﻿namespace ASP_Chat.Exceptions
 {
-    public class CustomException : System.Exception
+    public class ServerException : System.Exception
     {
         public ExceptionCodes Code { get; set; }
         public StatusCodes StatusCode { get; set; }
 
         public enum ExceptionCodes {
             SecretKeyNotSet = 0,
+            EmptyCredentials,
             InvalidCredentials,
+            InvalidToken,
             UserNotFound,
             UserNotAdmin,
             UserNotInChat,
@@ -37,7 +39,7 @@
             InternalServerError = 500
         }
 
-        public CustomException(string message, ExceptionCodes code, StatusCodes statusCode) : base(message)
+        public ServerException(string message, ExceptionCodes code, StatusCodes statusCode) : base(message)
         {
             Code = code;
             StatusCode = statusCode;

@@ -9,6 +9,6 @@ namespace ASP_Chat.Service
         User? GetUserByUsername(string username);
         HashSet<User> GetUsersByUsername(string username);
         User UpdateUser(long id, string? username, string? name, string? description);
-        int DeleteUser(long id);
+        string DeleteUser(long id);
     }
 }

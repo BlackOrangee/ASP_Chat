@@ -1,5 +1,5 @@
 ﻿using ASP_Chat.Entity;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 
 namespace ASP_Chat.Service.Impl
@@ -29,9 +29,9 @@ namespace ASP_Chat.Service.Impl
             if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId) 
                 || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
-                throw new CustomException("You have no permission to delete this message",
-                CustomException.ExceptionCodes.NoPermissionToDeleteMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw new ServerException("You have no permission to delete this message",
+                ServerException.ExceptionCodes.NoPermissionToDeleteMessage,
+                ServerException.StatusCodes.BadRequest);
             }
             _context.Messages.Remove(message);
             _context.SaveChanges();
@@ -48,9 +48,9 @@ namespace ASP_Chat.Service.Impl
             if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId)
                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
-                throw new CustomException("You have no permission to edit this message",
-                CustomException.ExceptionCodes.NoPermissionToEditMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw new ServerException("You have no permission to edit this message",
+                ServerException.ExceptionCodes.NoPermissionToEditMessage,
+                ServerException.StatusCodes.BadRequest);
             }
             message.Text = text;
             message.IsEdited = true;
@@ -69,16 +69,16 @@ namespace ASP_Chat.Service.Impl
             if (chat.Type.Id == (long)EChatType.Channel 
                 && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
             {
-                throw new CustomException("You have no permission to send messages in this chat",
-                CustomException.ExceptionCodes.NoPermissionToSendMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw new ServerException("You have no permission to send messages in this chat",
+                ServerException.ExceptionCodes.NoPermissionToSendMessage,
+                ServerException.StatusCodes.BadRequest);
             }
 
             if(text == null && file == null)
             {
-                throw new CustomException("Message is empty", 
-                CustomException.ExceptionCodes.MessageIsEmpty,
-                CustomException.StatusCodes.BadRequest);
+                throw new ServerException("Message is empty", 
+                ServerException.ExceptionCodes.MessageIsEmpty,
+                ServerException.StatusCodes.BadRequest);
             }
 
             Message message = new Message() 
@@ -124,9 +124,9 @@ namespace ASP_Chat.Service.Impl
 
             if (message == null)
             {
-                throw new CustomException("Message not found",
-                CustomException.ExceptionCodes.MessageNotFound,
-                CustomException.StatusCodes.NotFound);
+                throw new ServerException("Message not found",
+                ServerException.ExceptionCodes.MessageNotFound,
+                ServerException.StatusCodes.NotFound);
             }
 
             Chat chat = _chatService.GetChatById(userId, message.Chat.Id);

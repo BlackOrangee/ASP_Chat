@@ -1,7 +1,5 @@
 ﻿using ASP_Chat.Entity;
-using System.Collections.ObjectModel;
-using Microsoft.EntityFrameworkCore;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -16,19 +14,20 @@ namespace ASP_Chat.Service.Impl
             _logger = logger;
         }
 
-        public int DeleteUser(long id)
+        public string DeleteUser(long id)
         {
             _logger.LogDebug("Deleting user with id: {id}", id);
             var user = _context.Users.FirstOrDefault(u => u.Id == id);
             if (user == null)
             {
-                throw new CustomException($"User with id: {id} not found",
-                    CustomException.ExceptionCodes.UserNotFound, 
-                    CustomException.StatusCodes.NotFound);
+                throw new ServerException($"User with id: {id} not found",
+                    ServerException.ExceptionCodes.UserNotFound, 
+                    ServerException.StatusCodes.NotFound);
             }    
 
             _context.Users.Remove(user);
-            return _context.SaveChanges();
+            _context.SaveChanges();
+            return "User deleted successfully";
         }
 
         public User GetUserById(long id)
@@ -38,9 +37,9 @@ namespace ASP_Chat.Service.Impl
 
             if (user == null)
             {
-                throw new CustomException($"User with id: {id} not found", 
-                    CustomException.ExceptionCodes.UserNotFound, 
-                    CustomException.StatusCodes.NotFound);
+                throw new ServerException($"User with id: {id} not found", 
+                    ServerException.ExceptionCodes.UserNotFound, 
+                    ServerException.StatusCodes.NotFound);
             }
 
             return user;
@@ -65,9 +64,9 @@ namespace ASP_Chat.Service.Impl
 
             if (user == null)
             {
-                throw new CustomException($"User with id: {id} not found", 
-                    CustomException.ExceptionCodes.UserNotFound, 
-                    CustomException.StatusCodes.NotFound);
+                throw new ServerException($"User with id: {id} not found", 
+                    ServerException.ExceptionCodes.UserNotFound, 
+                    ServerException.StatusCodes.NotFound);
             }
 
             if (!string.IsNullOrEmpty(username)) 

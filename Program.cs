@@ -1,5 +1,5 @@
 using ASP_Chat;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Service;
 using ASP_Chat.Service.Impl;
 using Autofac;
@@ -37,9 +37,9 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
 if (string.IsNullOrEmpty(secretKey))
 {
-    throw new CustomException("JWT secret key is not set",
-        CustomException.ExceptionCodes.SecretKeyNotSet,
-        CustomException.StatusCodes.InternalServerError);
+    throw new ServerException("JWT secret key is not set",
+        ServerException.ExceptionCodes.SecretKeyNotSet,
+        ServerException.StatusCodes.InternalServerError);
 }
 
 builder.Services.AddAuthentication(options =>
@@ -62,7 +62,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-app.UseMiddleware<CustomExceptionMiddleware>();
+app.UseMiddleware<ServerExceptionMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
