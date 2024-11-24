@@ -9,10 +9,9 @@ namespace ASP_Chat.Service
         Chat UpdateChatInfo(long adminId, long chatId, string? tag, string? name, string? description, Media? image);
         string AddModeratorToChat(long adminId, ICollection<long> userIds, long chatId);
         string AddUsersToChat(long adminId, ICollection<long> userIds, long chatId);
-        ICollection<Chat> GetChatsByName(long userId, string name);
-        ICollection<Chat> GetChatsByTag(long userId, string tag);
         Chat GetChatById(long userId, long chatId);
-        ICollection<Chat> GetChatsByUser(long userId);
-        
+        ICollection<Chat> GetChats(long userId, string? name, string? tag);
+        string JoinChat(long userId, long chatId);
+        string LeaveChat(long userId, long chatId);
     }
 }

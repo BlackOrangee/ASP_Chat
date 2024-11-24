@@ -410,5 +410,96 @@ namespace ASP_Chat.Service.Impl
 
             return chat;
         }
+
+        public ICollection<Chat> GetChats(long userId, string? name, string? tag)
+        {
+            _logger.LogDebug("Getting chats with user id: {userId}", userId);
+
+            if (name != null)
+            {
+                return GetChatsByName(userId, name);
+            }
+            else if (tag != null)
+            {
+                return GetChatsByTag(userId, tag);
+            }
+                
+            return GetChatsByUser(userId);
+        }
+
+        public string JoinChat(long userId, long chatId)
+        {
+            _logger.LogDebug("Joining chat with id: {chatId}", chatId);
+            User user = _userService.GetUserById(userId);
+
+            Chat chat = GetChat(chatId);
+
+            if (chat.Users.Contains(user))
+            {
+                throw new ServerException("You are already in this chat",
+                ServerException.ExceptionCodes.UserAlreadyInChat,
+                ServerException.StatusCodes.BadRequest);
+            }
+
+            if (chat.Type.Id == (long)EChatType.Channel)
+            {
+                chat.Users.Add(user);
+                _context.Chats.Update(chat);
+                _context.SaveChanges();
+
+                return "Joined successfully";
+            }
+            
+            throw new ServerException("Chat is not public",
+            ServerException.ExceptionCodes.ChatNotPublic,
+            ServerException.StatusCodes.BadRequest);
+        }
+
+        public string LeaveChat(long userId, long chatId)
+        {
+            _logger.LogDebug("Leaving chat with id: {chatId}", chatId);
+            User user = _userService.GetUserById(userId);
+            Chat chat = GetChat(chatId);
+
+            if (!chat.Users.Contains(user))
+            {
+                throw new ServerException("You are not in this chat",
+                ServerException.ExceptionCodes.UserNotInChat,
+                ServerException.StatusCodes.BadRequest);
+            }
+
+            if (chat.Type.Id == (long)EChatType.P2P)
+            {
+                chat.Users.Remove(user);
+                if (chat.Users.Count == 1)
+                {
+                    _context.Chats.Remove(chat);
+                }
+                else
+                {
+                    chat.Admin = chat.Users.First(u => u.Id != userId);
+                }
+            }
+            else
+            {
+                if (chat.Users.Count == 1)
+                {
+                    chat.Users.Remove(user);
+                    _context.Chats.Remove(chat);
+                }
+                else if (chat.Admin.Id == user.Id)
+                {
+                    throw new ServerException("You can't leave this chat as admin",
+                    ServerException.ExceptionCodes.UserCanNotLeaveChatAsAdmin,
+                    ServerException.StatusCodes.BadRequest);
+                }
+                chat.Users.Remove(user);
+            }
+
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
+
+            return "Left successfully";
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace ASP_Chat.Entity
+﻿using Newtonsoft.Json;
+
+namespace ASP_Chat.Entity
 {
     public class Message
     {
@@ -11,5 +13,10 @@
         public bool IsEdited { get; set; } = false;
         public bool IsReaded { get; set; } = false;
         public ICollection<Media>? Media { get; set; } = new HashSet<Media>();
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }
