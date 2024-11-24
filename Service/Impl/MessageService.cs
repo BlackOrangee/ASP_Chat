@@ -26,7 +26,7 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId) 
+            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId) 
                 || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
                 throw new ServerException("You have no permission to delete this message",
@@ -45,7 +45,7 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId)
+            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId)
                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
                 throw new ServerException("You have no permission to edit this message",
@@ -66,7 +66,7 @@ namespace ASP_Chat.Service.Impl
 
             User user = _userService.GetUserById(userId);
 
-            if (chat.Type.Id == (long)EChatType.Channel 
+            if (chat.Type.Id == (long)ChatTypes.Channel 
                 && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
             {
                 throw new ServerException("You have no permission to send messages in this chat",

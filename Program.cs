@@ -13,7 +13,6 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-//var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -26,7 +25,9 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
     containerBuilder.RegisterType<AuthService>().As<IAuthService>().SingleInstance();
     containerBuilder.RegisterType<UserService>().As<IUserService>().SingleInstance();
-    ////////////////////////////////////////
+    containerBuilder.RegisterType<ChatService>().As<IChatService>().SingleInstance();
+    containerBuilder.RegisterType<MessageService>().As<IMessageService>().SingleInstance();
+    containerBuilder.RegisterType<JwtService>().As<IJwtService>().SingleInstance();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -50,12 +51,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        //ValidateIssuer = true,
-        //ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        //ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
-        //ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });

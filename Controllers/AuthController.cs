@@ -14,11 +14,13 @@ namespace ASP_Chat.Controllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IAuthService _authService;
+        private readonly JwtService _jwtService;
 
-        public AuthController(ILogger<AuthController> logger, IAuthService authService)
+        public AuthController(ILogger<AuthController> logger, IAuthService authService, JwtService jwtService)
         {
             _logger = logger;
             _authService = authService;
+            _jwtService = jwtService;
         }
 
         [HttpPost("register")]
@@ -39,7 +41,7 @@ namespace ASP_Chat.Controllers
         [HttpPost("change-password")]
         public IActionResult ChangePassword([FromBody] dynamic body)
         {
-            long userId = AuthService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
             _logger.LogInformation($"UserId: {userId}. Try to change password.");
 
             return Ok(new ApiResponse( message: _authService.ChangePassword(userId, body.oldPassword, body.newPassword)));

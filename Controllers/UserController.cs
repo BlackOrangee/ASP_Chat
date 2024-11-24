@@ -13,11 +13,13 @@ namespace ASP_Chat.Controllers
     {
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
+        private readonly IJwtService _jwtService;
 
-        public UserController(ILogger<UserController> logger, IUserService userService)
+        public UserController(ILogger<UserController> logger, IUserService userService, IJwtService jwtService)
         {
             _logger = logger;
             _userService = userService;
+            _jwtService = jwtService;
         }
 
         [HttpGet("{id}")] 
@@ -37,7 +39,7 @@ namespace ASP_Chat.Controllers
         [HttpPut("{id}")] 
         public IActionResult UpdateUser([FromBody] dynamic body)
         {
-            long userId = AuthService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
             
             _logger.LogInformation("Updating user with id: {id}", userId);
             return Ok(new ApiResponse(data: _userService.UpdateUser(userId, body.username, body.name, body.description).ToString()));

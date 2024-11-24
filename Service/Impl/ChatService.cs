@@ -36,7 +36,7 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
                 throw new ServerException("P2P chat can't have moderators",
                 ServerException.ExceptionCodes.ChatCanNotHaveModerators,
@@ -105,7 +105,7 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
                 throw new ServerException("P2P chat can't have morer users",
                 ServerException.ExceptionCodes.ChatCanNotHaveUsers,
@@ -316,19 +316,19 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userGroupAndChanels = _context.Chats.Where(
-                    c => c.Type.Id != (long)EChatType.P2P
+                    c => c.Type.Id != (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Name.Contains(name)
                 ).ToHashSet();
             
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.P2P
+                    c => c.Type.Id == (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name)
                 ).ToHashSet();
 
             HashSet<Chat> ChanelsToJoin = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.Channel
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Name.Contains(name)
                 ).ToHashSet();
 
@@ -342,13 +342,13 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.P2P
+                    c => c.Type.Id == (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag)
                 ).ToHashSet();
 
             HashSet<Chat> Chanels = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.Channel
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Tag.Contains(tag)
                 ).ToHashSet();
 
@@ -371,7 +371,7 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
                 throw new ServerException("P2P chat can't be updated",
                 ServerException.ExceptionCodes.ChatCanNotBeUpdated,
@@ -385,7 +385,7 @@ namespace ASP_Chat.Service.Impl
                 ServerException.StatusCodes.BadRequest);
             }
 
-            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == (long)EChatType.Channel)
+            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == (long)ChatTypes.Channel)
             {
                 chat.Tag = tag;
             }
@@ -441,7 +441,7 @@ namespace ASP_Chat.Service.Impl
                 ServerException.StatusCodes.BadRequest);
             }
 
-            if (chat.Type.Id == (long)EChatType.Channel)
+            if (chat.Type.Id == (long)ChatTypes.Channel)
             {
                 chat.Users.Add(user);
                 _context.Chats.Update(chat);
@@ -468,7 +468,7 @@ namespace ASP_Chat.Service.Impl
                 ServerException.StatusCodes.BadRequest);
             }
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
                 chat.Users.Remove(user);
                 if (chat.Users.Count == 1)
