@@ -5,6 +5,7 @@ namespace ASP_Chat.Entity
     public class Chat
     {
         public long Id { get; set; }
+        public long AdminId { get; set; }
         public ChatType Type { get; set; }
         public User Admin { get; set; }
         public string? Tag { get; set; }
