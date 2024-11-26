@@ -17,13 +17,9 @@ namespace ASP_Chat.Service.Impl
         public string DeleteUser(long id)
         {
             _logger.LogDebug("Deleting user with id: {id}", id);
-            var user = _context.Users.FirstOrDefault(u => u.Id == id);
-            if (user == null)
-            {
-                throw new ServerException($"User with id: {id} not found",
-                    ServerException.ExceptionCodes.UserNotFound, 
-                    ServerException.StatusCodes.NotFound);
-            }    
+            User? user = _context.Users.First(u => u.Id == id);
+            
+            CheckIfUserExists(user);
 
             _context.Users.Remove(user);
             _context.SaveChanges();
@@ -33,14 +29,9 @@ namespace ASP_Chat.Service.Impl
         public User GetUserById(long id)
         {
             _logger.LogDebug("Getting user with id: {id}", id);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
+            User? user = _context.Users.First(u => u.Id == id);
 
-            if (user == null)
-            {
-                throw new ServerException($"User with id: {id} not found", 
-                    ServerException.ExceptionCodes.UserNotFound, 
-                    ServerException.StatusCodes.NotFound);
-            }
+            CheckIfUserExists(user);
 
             return user;
         }
@@ -60,14 +51,9 @@ namespace ASP_Chat.Service.Impl
         public User UpdateUser(long id, string? username, string? name, string? description)
         {
             _logger.LogDebug("Updating user with id: {id}", id);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
+            User? user = _context.Users.First(u => u.Id == id);
 
-            if (user == null)
-            {
-                throw new ServerException($"User with id: {id} not found", 
-                    ServerException.ExceptionCodes.UserNotFound, 
-                    ServerException.StatusCodes.NotFound);
-            }
+            CheckIfUserExists(user);
 
             if (!string.IsNullOrEmpty(username)) 
             {
@@ -88,6 +74,16 @@ namespace ASP_Chat.Service.Impl
             _context.SaveChanges();
 
             return user;
+        }
+
+        private void CheckIfUserExists(User? user)
+        {
+            _logger.LogDebug("Checking if user exists with username: {username}", user.Username);
+
+            if (user == null)
+            {
+                throw ServerExceptionFactory.UserNotFound();
+            }
         }
     }
 }

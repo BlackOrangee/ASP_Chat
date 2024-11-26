@@ -5,43 +5,6 @@
         public ExceptionCodes Code { get; set; }
         public StatusCodes StatusCode { get; set; }
 
-        public enum ExceptionCodes {
-            SecretKeyNotSet = 0,
-            EmptyCredentials,
-            InvalidCredentials,
-            InvalidToken,
-            UserNotFound,
-            UserNotAdmin,
-            UserNotInChat,
-            UserCanNotLeaveChatAsAdmin,
-            UserAlreadyExists,
-            UserAlreadyInChat,
-            UserAlreadyModerator,
-            UsersNotFound,
-            ChatNotFound,
-            ChatNotPublic,
-            ChatTypeNotFound,
-            ChatCanNotHaveUsers,
-            ChatCanNotHaveModerators,
-            ChatCanNotBeUpdated,
-            GroupNameIsEmpty,
-            ChannelNameIsEmpty,
-            ChannelTagIsEmpty,
-            MessageNotFound,
-            MessageIsEmpty,
-            NoPermissionToSendMessage,
-            NoPermissionToEditMessage,
-            NoPermissionToDeleteMessage,
-        }
-        
-        public enum StatusCodes {
-            BadRequest = 400,
-            Unauthorized = 401,
-            Forbidden = 403,
-            NotFound = 404,
-            InternalServerError = 500
-        }
-
         public ServerException(string message, ExceptionCodes code, StatusCodes statusCode) : base(message)
         {
             Code = code;

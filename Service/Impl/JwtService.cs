@@ -16,9 +16,7 @@ namespace ASP_Chat.Service.Impl
 
             if (string.IsNullOrEmpty(secretKey))
             {
-                throw new ServerException("JWT secret key is not set",
-                    ServerException.ExceptionCodes.SecretKeyNotSet,
-                    ServerException.StatusCodes.InternalServerError);
+                throw ServerExceptionFactory.SecretKeyNotSet();
             }
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -50,23 +48,17 @@ namespace ASP_Chat.Service.Impl
                     var userIdClaim = tokenS.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Sub);
                     if (userIdClaim == null)
                     {
-                        throw new ServerException("Invalid token",
-                            ServerException.ExceptionCodes.InvalidToken,
-                            ServerException.StatusCodes.Unauthorized);
+                        throw ServerExceptionFactory.InvalidToken();
                     }
 
                     return long.Parse(userIdClaim.Value);
                 }
 
-                throw new ServerException("Invalid token format",
-                    ServerException.ExceptionCodes.InvalidToken,
-                    ServerException.StatusCodes.Unauthorized);
+                throw ServerExceptionFactory.InvalidToken();
             }
             catch (Exception ex)
             {
-                throw new ServerException("Failed to parse token",
-                    ServerException.ExceptionCodes.InvalidToken,
-                    ServerException.StatusCodes.Unauthorized);
+                throw ServerExceptionFactory.InvalidToken();
             }
         }
     }

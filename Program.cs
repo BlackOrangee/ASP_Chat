@@ -38,9 +38,7 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
 if (string.IsNullOrEmpty(secretKey))
 {
-    throw new ServerException("JWT secret key is not set",
-        ServerException.ExceptionCodes.SecretKeyNotSet,
-        ServerException.StatusCodes.InternalServerError);
+    throw ServerExceptionFactory.SecretKeyNotSet();
 }
 
 builder.Services.AddAuthentication(options =>

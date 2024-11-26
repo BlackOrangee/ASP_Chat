@@ -26,9 +26,7 @@ namespace ASP_Chat.Service.Impl
         {
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                throw new ServerException("Username or password is empty", 
-                    ServerException.ExceptionCodes.EmptyCredentials, 
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.EmptyCredentials();
             }
 
             _logger.LogDebug($"Username: {username}. Try to login.");
@@ -38,9 +36,7 @@ namespace ASP_Chat.Service.Impl
             if (user == null || _passwordHasher.VerifyHashedPassword(user, user.Password, password) 
                 == PasswordVerificationResult.Failed)
             { 
-                throw new ServerException("Wrong username or password", 
-                    ServerException.ExceptionCodes.InvalidCredentials, 
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.InvalidCredentials();
             }
 
             return _jwtService.GenerateJwtToken(user.Id.ToString());
@@ -54,18 +50,14 @@ namespace ASP_Chat.Service.Impl
                 || string.IsNullOrEmpty(password) 
                 || string.IsNullOrEmpty(name))
             {
-                throw new ServerException("Username, password or name is empty", 
-                    ServerException.ExceptionCodes.EmptyCredentials, 
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.EmptyCredentials();
             }
 
             User? user = _userService.GetUserByUsername(username);
 
             if (user != null)
             {
-                throw new ServerException($"User with this username {username} already exists", 
-                    ServerException.ExceptionCodes.UserAlreadyExists, 
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserAlreadyExists();
             }
 
             User newUser = new User { Username = username, Name = name };
@@ -84,18 +76,14 @@ namespace ASP_Chat.Service.Impl
             if (string.IsNullOrEmpty(oldPassword) 
                 || string.IsNullOrEmpty(newPassword))
             {
-                throw new ServerException("Password is empty", 
-                    ServerException.ExceptionCodes.EmptyCredentials, 
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.EmptyCredentials();
             }
 
             User user = _userService.GetUserById(userId);
 
             if (_passwordHasher.VerifyHashedPassword(user, user.Password, oldPassword) == PasswordVerificationResult.Failed)
             {
-                throw new ServerException("Invalid password",
-                    ServerException.ExceptionCodes.InvalidCredentials,
-                    ServerException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.InvalidCredentials();
             }
 
             user.Password = _passwordHasher.HashPassword(user, newPassword);
