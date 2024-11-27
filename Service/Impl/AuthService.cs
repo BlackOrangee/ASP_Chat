@@ -1,10 +1,6 @@
 ﻿using ASP_Chat.Entity;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -14,82 +10,54 @@ namespace ASP_Chat.Service.Impl
         private readonly ILogger<AuthService> _logger;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IUserService _userService;
+        private readonly IJwtService _jwtService;
 
         public AuthService(ApplicationDBContext context, ILogger<AuthService> logger, IPasswordHasher<User> passwordHasher,
-            IUserService userService)
+            IUserService userService, IJwtService jwtService)
         {
             _context = context;
             _logger = logger;
             _passwordHasher = passwordHasher;
             _userService = userService;
-        }
-
-        private string GenerateJwtToken(string userId)
-        {
-            DotNetEnv.Env.Load();
-
-            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-
-            if (string.IsNullOrEmpty(secretKey))
-            {
-                throw new CustomException("JWT secret key is not set",
-                    CustomException.ExceptionCodes.SecretKeyNotSet,
-                    CustomException.StatusCodes.InternalServerError);
-            }
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userId),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                //issuer: Environment.GetEnvironmentVariable("JWT_ISSUER"),
-                //audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
-                claims: claims,
-                expires: DateTime.Now.AddDays(30),
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            _jwtService = jwtService;
         }
 
         public string Login(string username, string password)
         {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                throw ServerExceptionFactory.EmptyCredentials();
+            }
+
             _logger.LogDebug($"Username: {username}. Try to login.");
 
             User? user = _userService.GetUserByUsername(username);
 
-            if (user == null)
-            {
-                throw new CustomException($"Wrong username or password",
-                    CustomException.ExceptionCodes.InvalidCredentials, 
-                    CustomException.StatusCodes.BadRequest);
-            }
-
-            if (_passwordHasher.VerifyHashedPassword(user, user.Password, password) == PasswordVerificationResult.Failed)
+            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.Password, password) 
+                == PasswordVerificationResult.Failed)
             { 
-                throw new CustomException("Wrong username or password", 
-                    CustomException.ExceptionCodes.InvalidCredentials, 
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.InvalidCredentials();
             }
 
-            return GenerateJwtToken(user.Id.ToString());
+            return _jwtService.GenerateJwtToken(user.Id.ToString());
         }
 
         public string Register(string username, string password, string name)
         {
             _logger.LogDebug($"Username: {username}. Try to register.");
 
+            if (string.IsNullOrEmpty(username) 
+                || string.IsNullOrEmpty(password) 
+                || string.IsNullOrEmpty(name))
+            {
+                throw ServerExceptionFactory.EmptyCredentials();
+            }
+
             User? user = _userService.GetUserByUsername(username);
 
             if (user != null)
             {
-                throw new CustomException($"User with this username {username} already exists", 
-                    CustomException.ExceptionCodes.UserAlreadyExists, 
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserAlreadyExists();
             }
 
             User newUser = new User { Username = username, Name = name };
@@ -105,13 +73,17 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug($"UserId: {userId}. Try to change password.");
 
+            if (string.IsNullOrEmpty(oldPassword) 
+                || string.IsNullOrEmpty(newPassword))
+            {
+                throw ServerExceptionFactory.EmptyCredentials();
+            }
+
             User user = _userService.GetUserById(userId);
 
             if (_passwordHasher.VerifyHashedPassword(user, user.Password, oldPassword) == PasswordVerificationResult.Failed)
             {
-                throw new CustomException("Invalid password",
-                    CustomException.ExceptionCodes.InvalidCredentials,
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.InvalidCredentials();
             }
 
             user.Password = _passwordHasher.HashPassword(user, newPassword);

@@ -1,11 +1,13 @@
-﻿namespace ASP_Chat.Exception
+﻿using ASP_Chat.Controllers.Response;
+
+namespace ASP_Chat.Exceptions
 {
-    public class CustomExceptionMiddleware
+    public class ServerExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<CustomExceptionMiddleware> _logger;
+        private readonly ILogger<ServerExceptionMiddleware> _logger;
 
-        public CustomExceptionMiddleware(RequestDelegate next, ILogger<CustomExceptionMiddleware> logger)
+        public ServerExceptionMiddleware(RequestDelegate next, ILogger<ServerExceptionMiddleware> logger)
         {
             _next = next;
             _logger = logger;
@@ -17,11 +19,15 @@
             {
                 await _next(httpContext);
             }
-            catch (CustomException ex)
+            catch (ServerException ex)
             {
                 _logger.LogError($"Error: {ex.Message}, StatusCode: {ex.StatusCode}, Code: {ex.Code}");
                 httpContext.Response.StatusCode = (int)ex.StatusCode;
-                await httpContext.Response.WriteAsync(new CustomExceptionResponce((int)ex.Code, ex.Message).ToString());
+                await httpContext.Response.WriteAsync(new ApiResponse(
+                        success: false,
+                        errorCode: (int)ex.Code,
+                        error: ex.Message
+                    ).ToString());
             }
             catch (System.Exception ex)
             {

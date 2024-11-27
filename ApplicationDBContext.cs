@@ -11,12 +11,27 @@ namespace ASP_Chat
         }
 
         public DbSet<Chat> Chats { get; set; }
-        public DbSet<ChatModerator> ChatModerators { get; set; }
         public DbSet<ChatType> ChatTypes { get; set; }
         public DbSet<Media> Medias { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<MessageMedia> MessageMedias { get; set; }
         public DbSet<User> Users { get; set; }
-        public DbSet<UserChat> UserChats { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Chat>()
+                .HasOne(c => c.Admin)
+                .WithMany(u => u.AdminedChats)
+                .HasForeignKey(c => c.AdminId);
+
+            modelBuilder.Entity<Chat>()
+                .HasMany(c => c.Users)
+                .WithMany(u => u.Chats);
+
+            modelBuilder.Entity<Chat>()
+                .HasMany(c => c.Moderators)
+                .WithMany(u => u.ModeratedChats);
+        }
     }
 }

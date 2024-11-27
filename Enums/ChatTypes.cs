@@ -1,6 +1,6 @@
 ﻿namespace ASP_Chat.Enums
 {
-    public enum EChatType
+    public enum ChatTypes
     {
         P2P = 1,
         Group = 2,

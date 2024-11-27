@@ -1,5 +1,5 @@
 ﻿using ASP_Chat.Entity;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 
 namespace ASP_Chat.Service.Impl
@@ -26,12 +26,10 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId) 
+            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId) 
                 || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
-                throw new CustomException("You have no permission to delete this message",
-                CustomException.ExceptionCodes.NoPermissionToDeleteMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.NoPermissionToDeleteMessage();
             }
             _context.Messages.Remove(message);
             _context.SaveChanges();
@@ -45,12 +43,10 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            if ((message.Chat.Type.Id == (long)EChatType.P2P && message.User.Id != userId)
+            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId)
                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
-                throw new CustomException("You have no permission to edit this message",
-                CustomException.ExceptionCodes.NoPermissionToEditMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.NoPermissionToEditMessage();
             }
             message.Text = text;
             message.IsEdited = true;
@@ -66,19 +62,15 @@ namespace ASP_Chat.Service.Impl
 
             User user = _userService.GetUserById(userId);
 
-            if (chat.Type.Id == (long)EChatType.Channel 
+            if (chat.Type.Id == (long)ChatTypes.Channel 
                 && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
             {
-                throw new CustomException("You have no permission to send messages in this chat",
-                CustomException.ExceptionCodes.NoPermissionToSendMessage,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.NoPermissionToSendMessage();
             }
 
             if(text == null && file == null)
             {
-                throw new CustomException("Message is empty", 
-                CustomException.ExceptionCodes.MessageIsEmpty,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.MessageIsEmpty();
             }
 
             Message message = new Message() 
@@ -101,8 +93,7 @@ namespace ASP_Chat.Service.Impl
 
             if (replyMessageId != null)
             {
-                Message replyMessage = GetMessage(userId, replyMessageId.Value);
-                message.ReplyMessage = replyMessage;
+                message.ReplyMessage = GetMessage(userId, replyMessageId.Value);
             }
 
             if (chat.Messages == null || chat.Messages.Count == 0)
@@ -124,12 +115,10 @@ namespace ASP_Chat.Service.Impl
 
             if (message == null)
             {
-                throw new CustomException("Message not found",
-                CustomException.ExceptionCodes.MessageNotFound,
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.MessageNotFound();
             }
 
-            Chat chat = _chatService.GetChatById(userId, message.Chat.Id);
+            _chatService.GetChatById(userId, message.Chat.Id);
 
             return message;
         }
@@ -145,11 +134,15 @@ namespace ASP_Chat.Service.Impl
                 chat.Messages = new HashSet<Message>();
             }
 
-            HashSet<Message> messages = chat.Messages.ToHashSet();
+            HashSet<Message> messages = new HashSet<Message>();
 
             if (lastMessageId != null)
             {
                 messages = chat.Messages.Where(m => m.Id > lastMessageId).ToHashSet();
+            }
+            else
+            {
+                messages = chat.Messages.ToHashSet();
             }
 
             return messages;

@@ -1,5 +1,5 @@
 using ASP_Chat;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Service;
 using ASP_Chat.Service.Impl;
 using Autofac;
@@ -13,7 +13,6 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-//var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -26,7 +25,9 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
     containerBuilder.RegisterType<AuthService>().As<IAuthService>().SingleInstance();
     containerBuilder.RegisterType<UserService>().As<IUserService>().SingleInstance();
-    ////////////////////////////////////////
+    containerBuilder.RegisterType<ChatService>().As<IChatService>().SingleInstance();
+    containerBuilder.RegisterType<MessageService>().As<IMessageService>().SingleInstance();
+    containerBuilder.RegisterType<JwtService>().As<IJwtService>().SingleInstance();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -37,9 +38,7 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
 if (string.IsNullOrEmpty(secretKey))
 {
-    throw new CustomException("JWT secret key is not set",
-        CustomException.ExceptionCodes.SecretKeyNotSet,
-        CustomException.StatusCodes.InternalServerError);
+    throw ServerExceptionFactory.SecretKeyNotSet();
 }
 
 builder.Services.AddAuthentication(options =>
@@ -50,19 +49,15 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        //ValidateIssuer = true,
-        //ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        //ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
-        //ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
 
 var app = builder.Build();
 
-app.UseMiddleware<CustomExceptionMiddleware>();
+app.UseMiddleware<ServerExceptionMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {

@@ -1,5 +1,5 @@
 ﻿using ASP_Chat.Entity;
-using ASP_Chat.Exception;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 
 namespace ASP_Chat.Service.Impl
@@ -22,9 +22,7 @@ namespace ASP_Chat.Service.Impl
             Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == id);
             if (chat == null)
             {
-                throw new CustomException("Chat not found",
-                CustomException.ExceptionCodes.ChatNotFound,
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.ChatNotFound();
             }
 
             return chat;
@@ -36,11 +34,9 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
-                throw new CustomException("P2P chat can't have moderators",
-                CustomException.ExceptionCodes.ChatCanNotHaveModerators,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.ChatCanNotHaveModerators();
             }
 
             User admin = _userService.GetUserById(adminId);
@@ -49,25 +45,19 @@ namespace ASP_Chat.Service.Impl
 
             if (usersSet == null || usersSet.Count == 0)
             {
-                throw new CustomException("No found users to make moderators",
-                CustomException.ExceptionCodes.UsersNotFound,
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.UsersNotFound();
             }
 
             if (chat.Admin != admin)
             {
-                throw new CustomException("User is not admin of this chat",
-                CustomException.ExceptionCodes.UserNotAdmin,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserNotAdmin();
             }
 
             foreach (User user in usersSet)
             {
                 if (!chat.Users.Contains(user))
                 {
-                    throw new CustomException("User " + user.Name + " not in this chat",
-                    CustomException.ExceptionCodes.UserNotInChat,
-                    CustomException.StatusCodes.BadRequest);
+                    throw ServerExceptionFactory.UserNotInChat();
                 }
             }
 
@@ -80,9 +70,7 @@ namespace ASP_Chat.Service.Impl
             {
                 if (chat.Moderators.Contains(user))
                 {
-                    throw new CustomException("User " + user.Name + " is already moderator of this chat",
-                    CustomException.ExceptionCodes.UserAlreadyModerator,
-                    CustomException.StatusCodes.BadRequest);
+                    throw ServerExceptionFactory.UserAlreadyModerator();
                 }
             }
 
@@ -105,11 +93,9 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
-                throw new CustomException("P2P chat can't have morer users",
-                CustomException.ExceptionCodes.ChatCanNotHaveUsers,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.ChatCanNotHaveUsers();
             }
 
             User chatUser = _userService.GetUserById(chatUserId);
@@ -118,25 +104,19 @@ namespace ASP_Chat.Service.Impl
 
             if (usersSet == null || usersSet.Count == 0)
             {
-                throw new CustomException("No found users to add in chat",
-                CustomException.ExceptionCodes.UsersNotFound,
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.UsersNotFound();
             }
 
             if (!chat.Users.Contains(chatUser))
             {
-                throw new CustomException("User is not in this chat",
-                CustomException.ExceptionCodes.UserNotInChat,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserNotInChat();
             }
 
             foreach (User user in usersSet)
             {
                 if (chat.Users.Contains(user))
                 {
-                    throw new CustomException("User " + user.Name + " already in this chat",
-                    CustomException.ExceptionCodes.UserNotInChat,
-                    CustomException.StatusCodes.BadRequest);
+                    throw ServerExceptionFactory.UserNotInChat();
                 }
             }
 
@@ -162,18 +142,14 @@ namespace ASP_Chat.Service.Impl
             ChatType? chatTypeObj = _context.ChatTypes.FirstOrDefault(ct => ct.Id == chatType);
             if (chatTypeObj == null)
             {
-                throw new CustomException("Chat type not found", 
-                CustomException.ExceptionCodes.ChatTypeNotFound, 
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.ChatTypeNotFound();
             }
 
             HashSet<User> usersSet = _context.Users.Where(u => users.Contains(u.Id)).ToHashSet();
 
             if (usersSet == null || usersSet.Count == 0)
             {
-                throw new CustomException("No found users to create chat",
-                CustomException.ExceptionCodes.UsersNotFound, 
-                CustomException.StatusCodes.NotFound);
+                throw ServerExceptionFactory.UsersNotFound();
             }
 
             // TODO: add media upload
@@ -198,9 +174,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Creating channel with admin id: {adminId}", admin.Id);
             if (name == null || string.IsNullOrEmpty(name))
             {
-                throw new CustomException("Channel name is empty",
-                    CustomException.ExceptionCodes.ChannelNameIsEmpty,
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.ChannelNameIsEmpty();
             }
 
             if (string.IsNullOrEmpty(description))
@@ -210,9 +184,7 @@ namespace ASP_Chat.Service.Impl
 
             if (string.IsNullOrEmpty(tag))
             {
-                throw new CustomException("Channel tag is empty",
-                    CustomException.ExceptionCodes.ChannelTagIsEmpty,
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.ChannelTagIsEmpty();
             }
 
             Chat chat = new Chat()
@@ -244,9 +216,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Creating group with admin id: {adminId}", admin.Id);
             if (name == null || string.IsNullOrEmpty(name))
             {
-                throw new CustomException("Group name is empty",
-                    CustomException.ExceptionCodes.GroupNameIsEmpty,
-                    CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.GroupNameIsEmpty();
             }
 
             if (string.IsNullOrEmpty(description))
@@ -302,9 +272,7 @@ namespace ASP_Chat.Service.Impl
 
             if (!chat.Users.Contains(user))
             {
-                throw new CustomException("User is not in this chat",
-                CustomException.ExceptionCodes.UserNotInChat,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserNotInChat();
             }
 
             return chat;
@@ -316,19 +284,19 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userGroupAndChanels = _context.Chats.Where(
-                    c => c.Type.Id != (long)EChatType.P2P
+                    c => c.Type.Id != (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Name.Contains(name)
                 ).ToHashSet();
             
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.P2P
+                    c => c.Type.Id == (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name)
                 ).ToHashSet();
 
             HashSet<Chat> ChanelsToJoin = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.Channel
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Name.Contains(name)
                 ).ToHashSet();
 
@@ -342,13 +310,13 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.P2P
+                    c => c.Type.Id == (long)ChatTypes.P2P
                     && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag)
                 ).ToHashSet();
 
             HashSet<Chat> Chanels = _context.Chats.Where(
-                    c => c.Type.Id == (long)EChatType.Channel
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Tag.Contains(tag)
                 ).ToHashSet();
 
@@ -371,21 +339,17 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(chatId);
 
-            if (chat.Type.Id == (long)EChatType.P2P)
+            if (chat.Type.Id == (long)ChatTypes.P2P)
             {
-                throw new CustomException("P2P chat can't be updated",
-                CustomException.ExceptionCodes.ChatCanNotBeUpdated,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.ChatCanNotBeUpdated();
             }
 
             if (chat.Admin.Id != adminId)
             {
-                throw new CustomException("User is not admin of this chat",
-                CustomException.ExceptionCodes.UserNotAdmin,
-                CustomException.StatusCodes.BadRequest);
+                throw ServerExceptionFactory.UserNotAdmin();
             }
 
-            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == (long)EChatType.Channel)
+            if (!string.IsNullOrEmpty(tag) && chat.Type.Id == (long)ChatTypes.Channel)
             {
                 chat.Tag = tag;
             }
@@ -409,6 +373,89 @@ namespace ASP_Chat.Service.Impl
             _context.SaveChanges();
 
             return chat;
+        }
+
+        public ICollection<Chat> GetChats(long userId, string? name, string? tag)
+        {
+            _logger.LogDebug("Getting chats with user id: {userId}", userId);
+
+            if (name != null)
+            {
+                return GetChatsByName(userId, name);
+            }
+            else if (tag != null)
+            {
+                return GetChatsByTag(userId, tag);
+            }
+                
+            return GetChatsByUser(userId);
+        }
+
+        public string JoinChat(long userId, long chatId)
+        {
+            _logger.LogDebug("Joining chat with id: {chatId}", chatId);
+            User user = _userService.GetUserById(userId);
+
+            Chat chat = GetChat(chatId);
+
+            if (chat.Users.Contains(user))
+            {
+                throw ServerExceptionFactory.UserAlreadyInChat();
+            }
+
+            if (chat.Type.Id == (long)ChatTypes.Channel)
+            {
+                chat.Users.Add(user);
+                _context.Chats.Update(chat);
+                _context.SaveChanges();
+
+                return "Joined successfully";
+            }
+            
+            throw ServerExceptionFactory.ChatNotPublic();
+        }
+
+        public string LeaveChat(long userId, long chatId)
+        {
+            _logger.LogDebug("Leaving chat with id: {chatId}", chatId);
+            User user = _userService.GetUserById(userId);
+            Chat chat = GetChat(chatId);
+
+            if (!chat.Users.Contains(user))
+            {
+                throw ServerExceptionFactory.UserNotInChat();
+            }
+
+            if (chat.Type.Id == (long)ChatTypes.P2P)
+            {
+                chat.Users.Remove(user);
+                if (chat.Users.Count == 1)
+                {
+                    _context.Chats.Remove(chat);
+                }
+                else
+                {
+                    chat.Admin = chat.Users.First(u => u.Id != userId);
+                }
+            }
+            else
+            {
+                if (chat.Users.Count == 1)
+                {
+                    chat.Users.Remove(user);
+                    _context.Chats.Remove(chat);
+                }
+                else if (chat.Admin.Id == user.Id)
+                {
+                    throw ServerExceptionFactory.UserCanNotLeaveChatAsAdmin();
+                }
+                chat.Users.Remove(user);
+            }
+
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
+
+            return "Left successfully";
         }
     }
 }
