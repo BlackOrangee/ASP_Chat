@@ -1,5 +1,6 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exception;
+using ASP_Chat.Enums;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -15,12 +16,6 @@ namespace ASP_Chat.Service.Impl
             _logger = logger;
             _userService = userService;
         }
-
-        private enum EChatType {
-            P2P = 1, 
-            Group = 2, 
-            Channel = 3 
-        };
 
         private Chat GetChat(long id)
         {
@@ -208,12 +203,12 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            if (description == null || string.IsNullOrEmpty(description))
+            if (string.IsNullOrEmpty(description))
             {
                 description = "Channel description";
             }
 
-            if (tag == null || string.IsNullOrEmpty(tag))
+            if (string.IsNullOrEmpty(tag))
             {
                 throw new CustomException("Channel tag is empty",
                     CustomException.ExceptionCodes.ChannelTagIsEmpty,
@@ -254,7 +249,7 @@ namespace ASP_Chat.Service.Impl
                     CustomException.StatusCodes.BadRequest);
             }
 
-            if (description == null || string.IsNullOrEmpty(description))
+            if (string.IsNullOrEmpty(description))
             {
                 description = "Group description";
             }

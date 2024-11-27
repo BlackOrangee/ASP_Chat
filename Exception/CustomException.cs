@@ -22,6 +22,11 @@
             GroupNameIsEmpty,
             ChannelNameIsEmpty,
             ChannelTagIsEmpty,
+            MessageNotFound,
+            MessageIsEmpty,
+            NoPermissionToSendMessage,
+            NoPermissionToEditMessage,
+            NoPermissionToDeleteMessage,
         }
         
         public enum StatusCodes {
