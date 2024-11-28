@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Entity;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
@@ -22,18 +23,14 @@ namespace ASP_Chat.Service.Impl
             _jwtService = jwtService;
         }
 
-        public string Login(string username, string password)
+        public string Login(AuthRequest userRequest)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                throw ServerExceptionFactory.EmptyCredentials();
-            }
+            _logger.LogDebug($"Username: {userRequest.Username}. Try to login.");
 
-            _logger.LogDebug($"Username: {username}. Try to login.");
+            User? user = _userService.GetUserByUsername(userRequest.Username);
 
-            User? user = _userService.GetUserByUsername(username);
-
-            if (user == null || _passwordHasher.VerifyHashedPassword(user, user.Password, password) 
+            if ( user == null 
+                || _passwordHasher.VerifyHashedPassword(user, user.Password, userRequest.Password) 
                 == PasswordVerificationResult.Failed)
             { 
                 throw ServerExceptionFactory.InvalidCredentials();
@@ -42,26 +39,19 @@ namespace ASP_Chat.Service.Impl
             return _jwtService.GenerateJwtToken(user.Id.ToString());
         }
 
-        public string Register(string username, string password, string name)
+        public string Register(AuthRequest userRequest)
         {
-            _logger.LogDebug($"Username: {username}. Try to register.");
+            _logger.LogDebug($"Username: {userRequest.Username}. Try to register.");
 
-            if (string.IsNullOrEmpty(username) 
-                || string.IsNullOrEmpty(password) 
-                || string.IsNullOrEmpty(name))
-            {
-                throw ServerExceptionFactory.EmptyCredentials();
-            }
-
-            User? user = _userService.GetUserByUsername(username);
+            User? user = _userService.GetUserByUsername(userRequest.Username);
 
             if (user != null)
             {
                 throw ServerExceptionFactory.UserAlreadyExists();
             }
 
-            User newUser = new User { Username = username, Name = name };
-            newUser.Password = _passwordHasher.HashPassword(newUser, password);
+            User newUser = new User { Username = userRequest.Username, Name = userRequest.Name };
+            newUser.Password = _passwordHasher.HashPassword(newUser, userRequest.Password);
 
             _context.Users.Add(newUser);
             _context.SaveChanges();
@@ -69,24 +59,21 @@ namespace ASP_Chat.Service.Impl
             return "User registered successfully";
         }
 
-        public string ChangePassword(long userId, string oldPassword, string newPassword)
+        public string ChangePassword(AuthRequest userRequest)
         {
-            _logger.LogDebug($"UserId: {userId}. Try to change password.");
+            _logger.LogDebug($"UserId: {userRequest.Id}. Try to change password.");
 
-            if (string.IsNullOrEmpty(oldPassword) 
-                || string.IsNullOrEmpty(newPassword))
-            {
-                throw ServerExceptionFactory.EmptyCredentials();
-            }
+            User user = _userService.GetUserById(userRequest.Id);
 
-            User user = _userService.GetUserById(userId);
-
-            if (_passwordHasher.VerifyHashedPassword(user, user.Password, oldPassword) == PasswordVerificationResult.Failed)
+            if (_passwordHasher.VerifyHashedPassword(user, user.Password, userRequest.Password)
+                == PasswordVerificationResult.Failed)
             {
                 throw ServerExceptionFactory.InvalidCredentials();
             }
 
-            user.Password = _passwordHasher.HashPassword(user, newPassword);
+            user.Password = _passwordHasher.HashPassword(user, userRequest.NewPassword);
+
+            _context.Users.Update(user);
             _context.SaveChanges();
 
             return "Password changed successfully";

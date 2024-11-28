@@ -1,9 +1,11 @@
-﻿namespace ASP_Chat.Service
+﻿using ASP_Chat.Controllers.Request;
+
+namespace ASP_Chat.Service
 {
     public interface IAuthService
     {
-        string Login(string username, string password);
-        string Register(string username, string password, string name);
-        string ChangePassword(long userId, string oldPassword, string newPassword);
+        string Login(AuthRequest request);
+        string Register(AuthRequest request);
+        string ChangePassword(AuthRequest userRequest);
     }
 }

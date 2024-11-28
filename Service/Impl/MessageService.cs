@@ -1,6 +1,7 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
+using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -37,40 +38,39 @@ namespace ASP_Chat.Service.Impl
             return "Message deleted successfully";
         }
 
-        public Message EditMessage(long userId, long messageId, string text)
+        public Message EditMessage(MessageRequest request)
         {
-            _logger.LogDebug("Editing message with id: {messageId}", messageId);
-            Message message = GetMessage(userId, messageId);
-            User user = _userService.GetUserById(userId);
+            request.SendMessageValidation();
+            _logger.LogDebug("Editing message with id: {messageId}", request.MessageId);
+            Message message = GetMessage(request.UserId, request.MessageId);
+            User user = _userService.GetUserById(request.UserId);
 
-            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId)
+            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != request.UserId)
                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
             {
                 throw ServerExceptionFactory.NoPermissionToEditMessage();
             }
-            message.Text = text;
+            message.Text = request.Text;
             message.IsEdited = true;
             _context.Messages.Update(message);
             _context.SaveChanges();
             return message;
         }
 
-        public Message SendMessage(long userId, long chatId, long? replyMessageId, string? text, ICollection<byte[]>? file)
+        public Message SendMessage(MessageRequest request)
         {
-            _logger.LogDebug("Sending message to chat with id: {chatId}", chatId);
-            Chat chat = _chatService.GetChatById(userId, chatId);
+            request.SendMessageValidation();
+            _logger.LogDebug("Sending message to chat with id: {chatId}", request.ChatId);
+            Chat chat = _chatService.GetChatById(request.UserId, request.ChatId.Value);
 
-            User user = _userService.GetUserById(userId);
+            User user = _userService.GetUserById(request.UserId);
 
             if (chat.Type.Id == (long)ChatTypes.Channel 
-                && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
+                && ((chat.Moderators != null 
+                    && !chat.Moderators.Contains(user)) 
+                    || !chat.Admin.Id.Equals(request.UserId)))
             {
                 throw ServerExceptionFactory.NoPermissionToSendMessage();
-            }
-
-            if(text == null && file == null)
-            {
-                throw ServerExceptionFactory.MessageIsEmpty();
             }
 
             Message message = new Message() 
@@ -80,20 +80,20 @@ namespace ASP_Chat.Service.Impl
                 Date = DateTime.Now
             };
 
-            if(text != null)
+            if(request.Text != null)
             {
-                message.Text = text;
+                message.Text = request.Text;
             }
 
-            if(file != null)
+            if(request.File != null)
             {
                 //TODO: file upload
                 message.Media = new HashSet<Media>();
             }
 
-            if (replyMessageId != null)
+            if (request.ReplyMessageId != null)
             {
-                message.ReplyMessage = GetMessage(userId, replyMessageId.Value);
+                message.ReplyMessage = GetMessage(request.UserId, request.ReplyMessageId.Value);
             }
 
             if (chat.Messages == null || chat.Messages.Count == 0)

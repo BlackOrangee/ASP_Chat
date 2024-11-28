@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service.Impl;
+using ASP_Chat.Controllers.Request;
 
 
 
@@ -24,27 +25,30 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromBody] dynamic body)
+        public IActionResult Register([FromBody] AuthRequest user)
         {
-            _logger.LogInformation($"Username: {body.username}. Try to register.");
-            return Ok(new ApiResponse(message: _authService.Register(body.username, body.password, body.name)));
+            user.RegisterValidate();
+            _logger.LogInformation($"Username: {user.Username}. Try to register.");
+            return Ok(new ApiResponse(message: _authService.Register(user)));
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] dynamic body)
+        public IActionResult Login([FromBody] AuthRequest user)
         {
-            _logger.LogInformation($"Username: {body.username}. Try to login.");
-            return Ok(new ApiResponse(data: new { token = _authService.Login(body.username, body.password) }));
+            user.LoginValidate();
+            _logger.LogInformation($"Username: {user.Username}. Try to login.");
+            return Ok(new ApiResponse(data: new { token = _authService.Login(user) }));
         }
 
         [Authorize]
         [HttpPost("change-password")]
-        public IActionResult ChangePassword([FromBody] dynamic body)
+        public IActionResult ChangePassword([FromBody] AuthRequest user)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
-            _logger.LogInformation($"UserId: {userId}. Try to change password.");
+            user.ChangePasswordValidate();
+            user.Id = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            _logger.LogInformation($"UserId: {user.Id}. Try to change password.");
 
-            return Ok(new ApiResponse( message: _authService.ChangePassword(userId, body.oldPassword, body.newPassword)));
+            return Ok(new ApiResponse( message: _authService.ChangePassword(user)));
         }
     }
 }

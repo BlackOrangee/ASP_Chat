@@ -183,5 +183,20 @@
                 ExceptionCodes.NoPermissionToDeleteMessage,
                 StatusCodes.Forbidden);
         }
+
+        public static ServerException InvalidInput(string message)
+        {
+            return new ServerException(message,
+                ExceptionCodes.InvalidInput,
+                StatusCodes.BadRequest);
+        }
+
+        public static ServerException FeldAreRequired(string message)
+        {
+            return new ServerException("Field are required.\n " + message,
+                ExceptionCodes.FeldAreRequired,
+                StatusCodes.BadRequest); ;
+        }
+
     }
 }

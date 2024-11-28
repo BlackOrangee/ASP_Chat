@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Entity;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 
 namespace ASP_Chat.Service.Impl
@@ -48,26 +49,27 @@ namespace ASP_Chat.Service.Impl
             return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
         }
 
-        public User UpdateUser(long id, string? username, string? name, string? description)
+        public User UpdateUser(UserRequest request)
         {
-            _logger.LogDebug("Updating user with id: {id}", id);
-            User? user = _context.Users.First(u => u.Id == id);
+            request.Validate();
+            _logger.LogDebug("Updating user with id: {id}", request.UserId);
+            User? user = _context.Users.First(u => u.Id == request.UserId);
 
             CheckIfUserExists(user);
 
-            if (!string.IsNullOrEmpty(username)) 
+            if (!string.IsNullOrEmpty(request.Username)) 
             {
-                user.Username = username;
+                user.Username = request.Username;
             } 
 
-            if (!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrEmpty(request.Name))
             {
-                user.Name = name;
+                user.Name = request.Name;
             }
 
-            if (!string.IsNullOrEmpty(description))
+            if (!string.IsNullOrEmpty(request.Description))
             {
-                user.Description = description;
+                user.Description = request.Description;
             }
 
             _context.Users.Update(user);

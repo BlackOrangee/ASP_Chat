@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Entity;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 
 namespace ASP_Chat.Service
 {
@@ -7,7 +8,7 @@ namespace ASP_Chat.Service
         User GetUserById(long id);
         User? GetUserByUsername(string username);
         HashSet<User> GetUsersByUsername(string username);
-        User UpdateUser(long id, string? username, string? name, string? description);
+        User UpdateUser(UserRequest request);
         string DeleteUser(long id);
     }
 }

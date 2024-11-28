@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Controllers.Response;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,18 +24,18 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPost]
-        public IActionResult SendMessage([FromBody] dynamic body)
+        public IActionResult SendMessage([FromBody] MessageRequest request)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
-            return Ok(new ApiResponse(data: _messageService.SendMessage(userId, body.chatId, 
-                                                        body.replyMessageId, body.text, body.file).ToString()));
+            request.UserId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            return Ok(new ApiResponse(data: _messageService.SendMessage(request).ToString()));
         }
 
         [HttpPatch("{id}")] 
-        public IActionResult EditMessage(long id, [FromBody] dynamic body)
+        public IActionResult EditMessage(long id, [FromBody] MessageRequest request)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]); 
-            return Ok(new ApiResponse(data: _messageService.EditMessage(userId, id, body.text).ToString()));
+            request.MessageId = id;
+            request.UserId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            return Ok(new ApiResponse(data: _messageService.EditMessage(request).ToString()));
         }
 
         [HttpDelete("{id}")] 

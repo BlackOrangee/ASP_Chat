@@ -6,6 +6,7 @@
         EmptyCredentials,
         InvalidCredentials,
         InvalidToken,
+        InvalidInput,
         UserNotFound,
         UserNotAdmin,
         UserNotInChat,
@@ -28,5 +29,6 @@
         NoPermissionToSendMessage,
         NoPermissionToEditMessage,
         NoPermissionToDeleteMessage,
+        FeldAreRequired,
     }
 }

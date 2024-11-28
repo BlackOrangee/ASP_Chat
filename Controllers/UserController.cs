@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Controllers.Response;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,12 +37,11 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPut("{id}")] 
-        public IActionResult UpdateUser([FromBody] dynamic body)
+        public IActionResult UpdateUser([FromBody] UserRequest request)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
-            
-            _logger.LogInformation("Updating user with id: {id}", userId);
-            return Ok(new ApiResponse(data: _userService.UpdateUser(userId, body.username, body.name, body.description).ToString()));
+            request.UserId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            _logger.LogInformation("Updating user with id: {id}", request.UserId);
+            return Ok(new ApiResponse(data: _userService.UpdateUser(request).ToString()));
         }
 
         [HttpDelete("{id}")] 
