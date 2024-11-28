@@ -33,5 +33,34 @@ namespace ASP_Chat
                 .HasMany(c => c.Moderators)
                 .WithMany(u => u.ModeratedChats);
         }
+
+        public void UpdateAndSave(Chat chat)
+        {
+            Chats.Update(chat);
+            SaveChanges();
+        }
+
+        public void UpdateAndSave(User user)
+        {
+            Users.Update(user);
+            SaveChanges();
+        }
+
+        public void AddAndSave(Chat chat)
+        {
+            Chats.Add(chat);
+            SaveChanges();
+        }
+
+        public void AddAndSave(User user)
+        {
+            Users.Add(user);
+            SaveChanges();
+        }
+
+        public void Remove(Chat chat)
+        {
+            Chats.Remove(chat);
+        }
     }
 }

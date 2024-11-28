@@ -26,5 +26,7 @@ namespace ASP_Chat.Entity
         {
             return JsonConvert.SerializeObject(this);
         }
+
+
     }
 }
