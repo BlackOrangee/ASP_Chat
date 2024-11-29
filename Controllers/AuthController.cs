@@ -25,6 +25,7 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult Register([FromBody] AuthRequest request)
         {
             request.RegisterValidate();
@@ -33,6 +34,7 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPost("login")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult Login([FromBody] AuthRequest request)
         {
             request.LoginValidate();
@@ -42,6 +44,7 @@ namespace ASP_Chat.Controllers
 
         [Authorize]
         [HttpPost("change-password")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult ChangePassword([FromBody] AuthRequest request, 
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {

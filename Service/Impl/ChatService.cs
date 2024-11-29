@@ -20,7 +20,7 @@ namespace ASP_Chat.Service.Impl
 
         private Chat GetChat(long id)
         {
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == id);
+            Chat? chat = _context.GetChatById(id);
             if (chat == null)
             {
                 throw ServerExceptionFactory.ChatNotFound();
@@ -50,7 +50,7 @@ namespace ASP_Chat.Service.Impl
 
             chat.ThrowIfUserNotAdmin(admin);
 
-            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
+            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 
@@ -79,7 +79,7 @@ namespace ASP_Chat.Service.Impl
 
             chat.ThrowIfUserNotInChat(chatUser);
 
-            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
+            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 
@@ -100,13 +100,13 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Creating chat with admin id: {AdminId}", request.UserId);
             User admin = _userService.GetUserById(request.UserId);
 
-            ChatType? chatTypeObj = _context.ChatTypes.FirstOrDefault(ct => ct.Id == request.TypeId);
+            ChatType? chatTypeObj = _context.GetChatTypeById(request.Type);
             if (chatTypeObj == null)
             {
                 throw ServerExceptionFactory.ChatTypeNotFound();
             }
 
-            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
+            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 

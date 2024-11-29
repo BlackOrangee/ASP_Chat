@@ -26,7 +26,28 @@ namespace ASP_Chat.Entity
         {
             return JsonConvert.SerializeObject(this);
         }
+        public void UpdateUsernameIfExists(UserRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                Username = request.Username;
+            }
+        }
 
+        public void UpdateNameIfExists(UserRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Name))
+            {
+                Name = request.Name;
+            }
+        }
 
+        public void UpdateDescriptionIfExists(UserRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Description))
+            {
+                Description = request.Description;
+            }
+        }
     }
 }

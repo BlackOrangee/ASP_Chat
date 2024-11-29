@@ -30,6 +30,11 @@ namespace ASP_Chat.Entity
             return Type.Id == (long)ChatTypes.P2P;
         }
 
+        public bool IsChatChannel()
+        {
+            return Type.Id == (long)ChatTypes.Channel;
+        }
+
         public bool IsChatEmpty()
         {
             return Users.Count == 0;
@@ -43,6 +48,11 @@ namespace ASP_Chat.Entity
         public bool IsUserAdmin(User user) 
         { 
             return user.Id == Admin.Id;
+        }
+
+        public bool IsUserModerator(User user)
+        {
+            return Moderators != null && Moderators.Contains(user);
         }
 
         public void ThrowIfUserNotAdmin(User user)
@@ -116,9 +126,17 @@ namespace ASP_Chat.Entity
             throw ServerExceptionFactory.ChatNotPublic();
         }
 
+        public void ThrowIfNotPermissionToSend(User user)
+        {
+            if (IsChatChannel() && (!IsUserModerator(user) || !IsUserAdmin(user)))
+            {
+                throw ServerExceptionFactory.NoPermissionToSendMessage();
+            }
+        }
+
         public void UpdateTagIfExists(ChatRequest request)
         {
-            if (!string.IsNullOrWhiteSpace(request.Tag) && chat.Type.Id == (long)ChatTypes.Channel)
+            if (!string.IsNullOrWhiteSpace(request.Tag) && Type.Id == (long)ChatTypes.Channel)
             {
                 Tag = request.Tag;
             }
@@ -188,6 +206,21 @@ namespace ASP_Chat.Entity
         public void MakeLastUserAdmin()
         {
             Admin = Users.First();
+        }
+
+        public ICollection<Message> GetMessages(long? lastMessageId)
+        {
+            if (Messages == null)
+            {
+                Messages = new HashSet<Message>();
+            }
+
+            if (lastMessageId != null)
+            {
+                return Messages.Where(m => m.Id > lastMessageId).ToHashSet();
+            }
+                
+            return Messages.ToHashSet();
         }
     }
 }

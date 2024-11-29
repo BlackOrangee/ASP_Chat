@@ -22,32 +22,38 @@ namespace ASP_Chat.Controllers
             _jwtService = jwtService;
         }
 
-        [HttpGet("{id}")] 
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult GetUserById(long id)
         {
-            _logger.LogInformation("Getting user with id: {id}", id);
+            _logger.LogInformation("Getting user with id: {Id}", id);
             return Ok( new ApiResponse(data: _userService.GetUserById(id).ToString()));
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult GetUsersByUsername([FromQuery] string username)
         {
-            _logger.LogInformation("Getting users with username: {username}", username);
+            _logger.LogInformation("Getting users with username: {Username}", username);
             return Ok(new ApiResponse(data: _userService.GetUsersByUsername(username)));
         }
 
-        [HttpPut("{id}")] 
-        public IActionResult UpdateUser([FromBody] UserRequest request)
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult UpdateUser([FromBody] UserRequest request,
+                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.UserId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
-            _logger.LogInformation("Updating user with id: {id}", request.UserId);
+            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            _logger.LogInformation("Updating user with id: {Id}", request.UserId);
             return Ok(new ApiResponse(data: _userService.UpdateUser(request).ToString()));
         }
 
-        [HttpDelete("{id}")] 
-        public IActionResult DeleteUser(long id)
+        [HttpDelete]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult DeleteUser([FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            _logger.LogInformation("Deleting user with id: {id}", id);
+            long id = _jwtService.GetUserIdFromToken(authorizationHeader);
+            _logger.LogInformation("Deleting user with id: {Id}", id);
             return Ok(new ApiResponse(message: _userService.DeleteUser(id).ToString()));
         }
     }

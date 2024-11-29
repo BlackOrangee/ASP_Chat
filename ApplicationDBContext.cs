@@ -46,6 +46,12 @@ namespace ASP_Chat
             SaveChanges();
         }
 
+        public void UpdateAndSave(Message message)
+        {
+            Messages.Update(message);
+            SaveChanges();
+        }
+
         public void AddAndSave(Chat chat)
         {
             Chats.Add(chat);
@@ -58,9 +64,41 @@ namespace ASP_Chat
             SaveChanges();
         }
 
+        public void AddAndSave(Message message)
+        {
+            Messages.Add(message);
+            SaveChanges();
+        }
+
         public void Remove(Chat chat)
         {
             Chats.Remove(chat);
         }
+
+        public void RemoveAndSave(Message message)
+        {
+            Messages.Remove(message);
+            SaveChanges();
+        }
+
+        public void RemoveAndSave(User user)
+        {
+            Users.Remove(user);
+            SaveChanges();
+        }
+
+        public User? GetUserById(long id) => Users.FirstOrDefault(u => u.Id == id);
+
+        public User? GetUserByUsername(string username) => Users.FirstOrDefault(u => u.Username == username);
+
+        public ICollection<User> GetUsersByIds(ICollection<long>? ids) => [.. Users.Where(u => ids.Contains(u.Id))];
+
+        public ICollection<User> GetUsersByUsername(string username) => Users.Where(u => u.Username.Contains(username)).ToHashSet();
+
+        public Chat? GetChatById(long id) => Chats.FirstOrDefault(c => c.Id == id);
+
+        public ChatType? GetChatTypeById(long id) => ChatTypes.FirstOrDefault(ct => ct.Id == id);
+
+        public Message? GetMessageById(long id) => Messages.FirstOrDefault(m => m.Id == id);
     }
 }

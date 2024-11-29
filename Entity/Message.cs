@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using ASP_Chat.Controllers.Request;
+using ASP_Chat.Enums;
+using ASP_Chat.Exceptions;
+using Newtonsoft.Json;
 
 namespace ASP_Chat.Entity
 {
@@ -17,6 +21,60 @@ namespace ASP_Chat.Entity
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
+        }
+
+        public bool IsUserSender(User user)
+        {
+            return User.Id == user.Id;
+        }
+
+        public void ThrowIfNotPermissionToDelete(User user)
+        {
+            if ((Chat.IsChatP2P() && !IsUserSender(user)) || !Chat.IsUserModerator(user) || !Chat.IsUserAdmin(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToDeleteMessage();
+            }
+        }
+
+        public void ThrowIfNotPermissionToEdit(User user)
+        {
+            if ((Chat.IsChatP2P() && !IsUserSender(user)) || !Chat.IsUserModerator(user) || !Chat.IsUserAdmin(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToEditMessage();
+            }
+        }
+
+        public void Edit(string? text)
+        {
+            Text = text;
+            IsEdited = true;
+        }
+
+        public void AddText(MessageRequest request)
+        {
+            if (request.Text != null)
+            {
+                Text = request.Text;
+            }
+        }
+
+        public void AddFile(MessageRequest request)
+        {
+            if (request.File != null)
+            {
+                //TODO: file upload
+                Media = new HashSet<Media>();
+            }
+        }
+
+        public void AddToChat(Chat chat)
+        {
+            Chat = chat;
+        }
+
+        public void SetReaded()
+        {
+            IsReaded = true;
         }
     }
 }
