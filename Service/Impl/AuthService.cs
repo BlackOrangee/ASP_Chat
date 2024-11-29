@@ -58,7 +58,8 @@ namespace ASP_Chat.Service.Impl
             User newUser = new User { Username = request.Username, Name = request.Name };
             newUser.Password = _passwordHasher.HashPassword(newUser, request.Password);
 
-            _context.AddAndSave(newUser);
+            _context.Users.Add(user);
+            _context.SaveChanges();
 
             return "User registered successfully";
         }
@@ -73,7 +74,8 @@ namespace ASP_Chat.Service.Impl
 
             user.Password = _passwordHasher.HashPassword(user, request.NewPassword);
 
-            _context.UpdateAndSave(user);
+            _context.Users.Update(user);
+            _context.SaveChanges();
 
             return "Password changed successfully";
         }

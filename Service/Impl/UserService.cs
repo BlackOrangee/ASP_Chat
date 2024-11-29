@@ -18,18 +18,19 @@ namespace ASP_Chat.Service.Impl
         public string DeleteUser(long id)
         {
             _logger.LogDebug("Deleting user with id: {Id}", id);
-            User? user = _context.GetUserById(id);
-            
+            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
+
             ThrowIfUserNotExists(user);
 
-            _context.RemoveAndSave(user);
+            _context.Users.Remove(user);
+            _context.SaveChanges();
             return "User deleted successfully";
         }
 
         public User GetUserById(long id)
         {
             _logger.LogDebug("Getting user with id: {Id}", id);
-            User? user = _context.GetUserById(id);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
             ThrowIfUserNotExists(user);
 
@@ -39,30 +40,27 @@ namespace ASP_Chat.Service.Impl
         public User? GetUserByUsername(string username)
         {
             _logger.LogDebug("Getting user with username: {Username}", username);
-            return _context.GetUserByUsername(username);
+            return _context.Users.FirstOrDefault(u => u.Username == username);
         }
 
         public HashSet<User> GetUsersByUsername(string username)
         {
             _logger.LogDebug("Getting users with same username: {Username}", username);
-            return _context.GetUsersByUsername(username).ToHashSet();
+            return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
         }
 
         public User UpdateUser(UserRequest request)
         {
             request.Validate();
             _logger.LogDebug("Updating user with id: {Id}", request.UserId);
-            User? user = _context.GetUserById(request.UserId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == request.UserId);
 
             ThrowIfUserNotExists(user);
 
-            user.UpdateUsernameIfExists(request);
+            user.UpdateFieldsIfExists(request);
 
-            user.UpdateNameIfExists(request);
-
-            user.UpdateDescriptionIfExists(request);
-
-            _context.UpdateAndSave(user);
+            _context.Users.Update(user);
+            _context.SaveChanges();
 
             return user;
         }

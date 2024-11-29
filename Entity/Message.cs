@@ -28,20 +28,14 @@ namespace ASP_Chat.Entity
             return User.Id == user.Id;
         }
 
-        public void ThrowIfNotPermissionToDelete(User user)
+        public bool IsUserHavePermissionToModifyMessage(User user)
         {
             if ((Chat.IsChatP2P() && !IsUserSender(user)) || !Chat.IsUserModerator(user) || !Chat.IsUserAdmin(user))
             {
-                throw ServerExceptionFactory.NoPermissionToDeleteMessage();
+                return false;
             }
-        }
 
-        public void ThrowIfNotPermissionToEdit(User user)
-        {
-            if ((Chat.IsChatP2P() && !IsUserSender(user)) || !Chat.IsUserModerator(user) || !Chat.IsUserAdmin(user))
-            {
-                throw ServerExceptionFactory.NoPermissionToEditMessage();
-            }
+            return true;
         }
 
         public void Edit(string? text)

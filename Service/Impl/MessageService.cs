@@ -27,9 +27,13 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            message.ThrowIfNotPermissionToDelete(user);
+            if (!message.IsUserHavePermissionToModifyMessage(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToDeleteMessage();
+            }
             
-            _context.RemoveAndSave(message);
+            _context.Messages.Remove(message);
+            _context.SaveChanges();
 
             return "Message deleted successfully";
         }
@@ -41,11 +45,16 @@ namespace ASP_Chat.Service.Impl
             Message message = GetMessage(request.UserId, request.MessageId);
             User user = _userService.GetUserById(request.UserId);
 
-            message.ThrowIfNotPermissionToEdit(user);
+            if (!message.IsUserHavePermissionToModifyMessage(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToEditMessage();
+            }
 
             message.Edit(request.Text);
 
-            _context.UpdateAndSave(message);
+            _context.Messages.Update(message);
+            _context.SaveChanges();
+
             return message;
         }
 
@@ -56,7 +65,10 @@ namespace ASP_Chat.Service.Impl
             Chat chat = _chatService.GetChatById(request.UserId, request.ChatId.Value);
             User user = _userService.GetUserById(request.UserId);
 
-            chat.ThrowIfNotPermissionToSend(user);
+            if (!chat.IsUserHavePermissionToSendMessage(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToSendMessage();
+            }
 
             Message message = new Message() 
             { 
@@ -76,7 +88,8 @@ namespace ASP_Chat.Service.Impl
 
             message.AddToChat(chat);
 
-            _context.AddAndSave(message);
+            _context.Messages.Add(message);
+            _context.SaveChanges();
 
             return message;
         }
@@ -84,7 +97,7 @@ namespace ASP_Chat.Service.Impl
         public Message GetMessage(long userId, long messageId)
         {
             _logger.LogDebug("Getting message with id: {MessageId}", messageId);
-            Message? message = _context.GetMessageById(messageId);
+            Message? message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
 
             if (message == null)
             {
@@ -110,7 +123,9 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Setting message with id: {MessageId} as readed", messageId);
             Message message = GetMessage(userId, messageId);
             message.SetReaded();
-            _context.UpdateAndSave(message);
+
+            _context.Messages.Update(message);
+            _context.SaveChanges();
         }
     }
 }

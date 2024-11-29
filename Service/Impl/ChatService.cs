@@ -2,6 +2,7 @@
 using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
+using System;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -20,7 +21,7 @@ namespace ASP_Chat.Service.Impl
 
         private Chat GetChat(long id)
         {
-            Chat? chat = _context.GetChatById(id);
+            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == id);
             if (chat == null)
             {
                 throw ServerExceptionFactory.ChatNotFound();
@@ -44,24 +45,38 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(request.ChatId);
 
-            chat.ThrowIfChatCantHaveModerators();
+            if (chat.IsChatP2P())
+            {
+                throw ServerExceptionFactory.ChatCanNotHaveModerators();
+            }
 
             User admin = _userService.GetUserById(request.UserId);
 
-            chat.ThrowIfUserNotAdmin(admin);
+            if (!chat.IsUserAdmin(admin))
+            {
+                throw ServerExceptionFactory.UserNotAdmin();
+            }
 
-            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
+            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 
             foreach (User user in usersSet)
             {
-                chat.ThrowIfUserNotInChat(user);
-                chat.ThrowIfUserAlreadyModerator(user);
+                if (!chat.IsUserInChat(user))
+                {
+                    throw ServerExceptionFactory.UserNotInChat();
+                }
+
+                if (chat.IsUserModerator(user))
+                {
+                    throw ServerExceptionFactory.UserAlreadyModerator();
+                }
                 chat.AddModerator(user);
             }
 
-            _context.UpdateAndSave(chat);
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
 
             return "Moderators added successfully";
         }
@@ -73,23 +88,33 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(request.ChatId);
 
-            chat.ThrowIfChatCantHaveUsers();
-            
+            if (chat.IsChatP2P())
+            {
+                throw ServerExceptionFactory.ChatCanNotHaveUsers();
+            }
+
             User chatUser = _userService.GetUserById(request.UserId);
 
-            chat.ThrowIfUserNotInChat(chatUser);
+            if (!chat.IsUserInChat(chatUser))
+            {
+                throw ServerExceptionFactory.UserNotInChat();
+            }
 
-            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
+            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 
             foreach (User user in usersSet)
             {
-                chat.ThrowIfUserAlreadyInChat(user);
+                if (chat.IsUserInChat(user))
+                {
+                    throw ServerExceptionFactory.UserAlreadyInChat();
+                }
                 chat.AddUser(user);
             }
 
-            _context.UpdateAndSave(chat);
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
 
             return "Users added successfully";
         }
@@ -100,13 +125,13 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Creating chat with admin id: {AdminId}", request.UserId);
             User admin = _userService.GetUserById(request.UserId);
 
-            ChatType? chatTypeObj = _context.GetChatTypeById(request.Type);
+            ChatType? chatTypeObj = _context.ChatTypes.FirstOrDefault(ct => ct.Id == request.TypeId);
             if (chatTypeObj == null)
             {
                 throw ServerExceptionFactory.ChatTypeNotFound();
             }
 
-            HashSet<User> usersSet = _context.GetUsersByIds(request.Users).ToHashSet();
+            HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
             ThrowIfUsersNotFound(usersSet);
 
@@ -146,7 +171,8 @@ namespace ASP_Chat.Service.Impl
                 chat.AddUser(user);
             }
 
-            _context.AddAndSave(chat);
+            _context.Chats.Add(chat);
+            _context.SaveChanges();
             return chat;
         }
 
@@ -164,7 +190,8 @@ namespace ASP_Chat.Service.Impl
                 chat.AddUser(user);
             }
 
-            _context.AddAndSave(chat);
+            _context.Chats.Add(chat);
+            _context.SaveChanges();
             return chat;
         }
 
@@ -175,7 +202,8 @@ namespace ASP_Chat.Service.Impl
             chat.AddUser(chat.Admin);
             chat.AddUser(user);
 
-            _context.AddAndSave(chat);
+            _context.Chats.Add(chat);
+            _context.SaveChanges();
             return chat;
         }
 
@@ -186,7 +214,10 @@ namespace ASP_Chat.Service.Impl
 
             Chat chat = GetChat(chatId);
 
-            chat.ThrowIfUserNotInChat(user);
+            if (!chat.IsUserInChat(user))
+            {
+                throw ServerExceptionFactory.UserNotInChat();
+            }
 
             return chat;
         }
@@ -251,22 +282,25 @@ namespace ASP_Chat.Service.Impl
 
             Chat? chat = GetChat(request.ChatId);
 
-            chat.ThrowIfChatCantBeUpdated();
+            if (chat.IsChatP2P())
+            {
+                throw ServerExceptionFactory.ChatCanNotBeUpdated();
+            }
 
-            chat.ThrowIfUserNotAdmin(user);
+            if (!chat.IsUserAdmin(user))
+            {
+                throw ServerExceptionFactory.UserNotAdmin();
+            }
 
-            chat.UpdateTagIfExists(request);
-
-            chat.UpdateNameIfExists(request);
-
-            chat.UpdateDescriptionIfExists(request);
+            chat.UpdateFieldsIfExists(request);
 
             //if (image != null)
             //{
             //    chat.Image = image;
             //}
 
-            _context.UpdateAndSave(chat);
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
 
             return chat;
         }
@@ -294,13 +328,20 @@ namespace ASP_Chat.Service.Impl
 
             Chat chat = GetChat(chatId);
 
-            chat.ThrowIfUserAlreadyInChat(user);
+            if (chat.IsUserInChat(user))
+            {
+                throw ServerExceptionFactory.UserAlreadyInChat();
+            }
 
-            chat.ThrowIfChatNotPublic();
+            if (!chat.IsChatPublic())
+            {
+                throw ServerExceptionFactory.ChatNotPublic();
+            }
 
             chat.AddUser(user);
 
-            _context.UpdateAndSave(chat);
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
 
             return "Joined successfully";
         }
@@ -311,14 +352,17 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
             Chat chat = GetChat(chatId);
 
-            chat.ThrowIfUserNotInChat(user);
+            if (!chat.IsUserInChat(user))
+            {
+                throw ServerExceptionFactory.UserNotInChat();
+            }
 
             if (chat.IsChatP2P())
             {
                 chat.RemoveUser(user);
                 if (chat.IsChatEmpty())
                 {
-                    _context.Remove(chat);
+                    _context.Chats.Remove(chat);
                 }
                 else
                 {
@@ -330,7 +374,7 @@ namespace ASP_Chat.Service.Impl
                 if (chat.IsChatWithLastUser())
                 {
                     chat.RemoveUser(user);
-                    _context.Remove(chat);
+                    _context.Chats.Remove(chat);
                 }
                 else if (chat.IsUserAdmin(user))
                 {
@@ -339,7 +383,8 @@ namespace ASP_Chat.Service.Impl
                 chat.RemoveUser(user);
             }
 
-            _context.UpdateAndSave(chat);
+            _context.Chats.Update(chat);
+            _context.SaveChanges();
 
             return "Left successfully";
         }

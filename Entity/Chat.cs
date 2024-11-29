@@ -55,103 +55,38 @@ namespace ASP_Chat.Entity
             return Moderators != null && Moderators.Contains(user);
         }
 
-        public void ThrowIfUserNotAdmin(User user)
+        public bool IsUserInChat(User user)
         {
-            if (Admin != user)
-            {
-                throw ServerExceptionFactory.UserNotAdmin();
-            }
+            return Users.Contains(user);
         }
 
-        public void ThrowIfChatCantHaveModerators()
+        public bool IsChatPublic()
         {
-            if (Type.Id == (long)ChatTypes.P2P)
-            {
-                throw ServerExceptionFactory.ChatCanNotHaveModerators();
-            }
+            return Type.Id == (long)ChatTypes.Channel;
         }
 
-        public void ThrowIfChatCantHaveUsers()
-        {
-            if (Type.Id == (long)ChatTypes.P2P)
-            {
-                throw ServerExceptionFactory.ChatCanNotHaveUsers();
-            }
-        }
-
-        public void ThrowIfChatCantBeUpdated()
-        {
-            if (Type.Id == (long)ChatTypes.P2P)
-            {
-                throw ServerExceptionFactory.ChatCanNotBeUpdated();
-            }
-        }
-
-        public void ThrowIfUserNotInChat(User user)
-        {
-            if (!Users.Contains(user))
-            {
-                throw ServerExceptionFactory.UserNotInChat();
-            }
-        }
-
-        public void ThrowIfUserAlreadyInChat(User user)
-        {
-            if (Users.Contains(user))
-            {
-                throw ServerExceptionFactory.UserAlreadyInChat();
-            }
-        }
-
-        public void ThrowIfUserAlreadyModerator(User user)
-        {
-            if (Moderators == null)
-            {
-                Moderators = new HashSet<User>();
-            }
-
-            if (Moderators.Contains(user))
-            {
-                throw ServerExceptionFactory.UserAlreadyModerator();
-            }
-        }
-
-        public void ThrowIfChatNotPublic()
-        {
-            if (Type.Id == (long)ChatTypes.Channel)
-            {
-                return;
-            }
-
-            throw ServerExceptionFactory.ChatNotPublic();
-        }
-
-        public void ThrowIfNotPermissionToSend(User user)
+        public bool IsUserHavePermissionToSendMessage(User user)
         {
             if (IsChatChannel() && (!IsUserModerator(user) || !IsUserAdmin(user)))
             {
-                throw ServerExceptionFactory.NoPermissionToSendMessage();
+                return false;
             }
+
+            return true;
         }
 
-        public void UpdateTagIfExists(ChatRequest request)
+        public void UpdateFieldsIfExists(ChatRequest request)
         {
-            if (!string.IsNullOrWhiteSpace(request.Tag) && Type.Id == (long)ChatTypes.Channel)
+            if (!string.IsNullOrWhiteSpace(request.Tag) && IsChatChannel())
             {
                 Tag = request.Tag;
             }
-        }
 
-        public void UpdateNameIfExists(ChatRequest request)
-        {
             if (!string.IsNullOrWhiteSpace(request.Name))
             {
                 Name = request.Name;
             }
-        }
 
-        public void UpdateDescriptionIfExists(ChatRequest request)
-        {
             if (!string.IsNullOrWhiteSpace(request.Description))
             {
                 Description = request.Description;
@@ -205,7 +140,10 @@ namespace ASP_Chat.Entity
 
         public void MakeLastUserAdmin()
         {
-            Admin = Users.First();
+            if (Users.Count == 1)
+            {
+                Admin = Users.First();
+            }
         }
 
         public ICollection<Message> GetMessages(long? lastMessageId)
