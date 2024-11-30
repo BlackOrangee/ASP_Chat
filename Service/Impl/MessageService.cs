@@ -1,12 +1,13 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
+using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Service.Impl
 {
     public class MessageService : IMessageService
     {
-        private ApplicationDBContext _context;
+        private readonly ApplicationDBContext _context;
         private readonly ILogger<MessageService> _logger;
         private readonly IUserService _userService;
         private readonly IChatService _chatService;
@@ -22,55 +23,51 @@ namespace ASP_Chat.Service.Impl
 
         public string DeleteMessage(long userId, long messageId)
         {
-            _logger.LogDebug("Deleting message with id: {messageId}", messageId);
+            _logger.LogDebug("Deleting message with id: {MessageId}", messageId);
             Message message = GetMessage(userId, messageId);
             User user = _userService.GetUserById(userId);
 
-            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId) 
-                || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
+            if (!message.IsUserHavePermissionToModifyMessage(user))
             {
                 throw ServerExceptionFactory.NoPermissionToDeleteMessage();
             }
+            
             _context.Messages.Remove(message);
             _context.SaveChanges();
 
             return "Message deleted successfully";
         }
 
-        public Message EditMessage(long userId, long messageId, string text)
+        public Message EditMessage(MessageRequest request)
         {
-            _logger.LogDebug("Editing message with id: {messageId}", messageId);
-            Message message = GetMessage(userId, messageId);
-            User user = _userService.GetUserById(userId);
+            request.SendMessageValidation();
+            _logger.LogDebug("Editing message with id: {MessageId}", request.MessageId);
+            Message message = GetMessage(request.UserId, request.MessageId);
+            User user = _userService.GetUserById(request.UserId);
 
-            if ((message.Chat.Type.Id == (long)ChatTypes.P2P && message.User.Id != userId)
-               || (message.Chat.Moderators != null && !message.Chat.Moderators.Contains(user)))
+            if (!message.IsUserHavePermissionToModifyMessage(user))
             {
                 throw ServerExceptionFactory.NoPermissionToEditMessage();
             }
-            message.Text = text;
-            message.IsEdited = true;
+
+            message.Edit(request.Text);
+
             _context.Messages.Update(message);
             _context.SaveChanges();
+
             return message;
         }
 
-        public Message SendMessage(long userId, long chatId, long? replyMessageId, string? text, ICollection<byte[]>? file)
+        public Message SendMessage(MessageRequest request)
         {
-            _logger.LogDebug("Sending message to chat with id: {chatId}", chatId);
-            Chat chat = _chatService.GetChatById(userId, chatId);
+            request.SendMessageValidation();
+            _logger.LogDebug("Sending message to chat with id: {ChatId}", request.ChatId);
+            Chat chat = _chatService.GetChatById(request.UserId, request.ChatId.Value);
+            User user = _userService.GetUserById(request.UserId);
 
-            User user = _userService.GetUserById(userId);
-
-            if (chat.Type.Id == (long)ChatTypes.Channel 
-                && ((chat.Moderators != null && !chat.Moderators.Contains(user)) || !chat.Admin.Id.Equals(userId)))
+            if (!chat.IsUserHavePermissionToSendMessage(user))
             {
                 throw ServerExceptionFactory.NoPermissionToSendMessage();
-            }
-
-            if(text == null && file == null)
-            {
-                throw ServerExceptionFactory.MessageIsEmpty();
             }
 
             Message message = new Message() 
@@ -80,28 +77,17 @@ namespace ASP_Chat.Service.Impl
                 Date = DateTime.Now
             };
 
-            if(text != null)
+            message.AddText(request);
+
+            message.AddFile(request);
+
+            if (request.ReplyMessageId != null)
             {
-                message.Text = text;
+                message.ReplyMessage = GetMessage(request.UserId, request.ReplyMessageId.Value);
             }
 
-            if(file != null)
-            {
-                //TODO: file upload
-                message.Media = new HashSet<Media>();
-            }
+            message.AddToChat(chat);
 
-            if (replyMessageId != null)
-            {
-                message.ReplyMessage = GetMessage(userId, replyMessageId.Value);
-            }
-
-            if (chat.Messages == null || chat.Messages.Count == 0)
-            {
-                chat.Messages = new HashSet<Message>();
-            }
-
-            chat.Messages.Add(message);
             _context.Messages.Add(message);
             _context.SaveChanges();
 
@@ -110,7 +96,7 @@ namespace ASP_Chat.Service.Impl
 
         public Message GetMessage(long userId, long messageId)
         {
-            _logger.LogDebug("Getting message with id: {messageId}", messageId);
+            _logger.LogDebug("Getting message with id: {MessageId}", messageId);
             Message? message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
 
             if (message == null)
@@ -125,34 +111,19 @@ namespace ASP_Chat.Service.Impl
 
         public ICollection<Message> GetMessages(long userId, long chatId, long? lastMessageId)
         {
-            _logger.LogDebug("Getting messages with chat id: {chatId}", chatId);
+            _logger.LogDebug("Getting messages with chat id: {ChatId}", chatId);
 
             Chat chat = _chatService.GetChatById(userId, chatId);
 
-            if(chat.Messages == null || chat.Messages.Count == 0)
-            {
-                chat.Messages = new HashSet<Message>();
-            }
-
-            HashSet<Message> messages = new HashSet<Message>();
-
-            if (lastMessageId != null)
-            {
-                messages = chat.Messages.Where(m => m.Id > lastMessageId).ToHashSet();
-            }
-            else
-            {
-                messages = chat.Messages.ToHashSet();
-            }
-
-            return messages;
+            return chat.GetMessages(lastMessageId);
         }
 
         public void SetReadedMessageStatus(long userId, long messageId)
         {
-            _logger.LogDebug("Setting message with id: {messageId} as readed", messageId);
+            _logger.LogDebug("Setting message with id: {MessageId} as readed", messageId);
             Message message = GetMessage(userId, messageId);
-            message.IsReaded = true;
+            message.SetReaded();
+
             _context.Messages.Update(message);
             _context.SaveChanges();
         }

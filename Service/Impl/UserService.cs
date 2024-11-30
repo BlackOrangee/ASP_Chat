@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Entity;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 
 namespace ASP_Chat.Service.Impl
@@ -16,10 +17,10 @@ namespace ASP_Chat.Service.Impl
 
         public string DeleteUser(long id)
         {
-            _logger.LogDebug("Deleting user with id: {id}", id);
-            User? user = _context.Users.First(u => u.Id == id);
-            
-            CheckIfUserExists(user);
+            _logger.LogDebug("Deleting user with id: {Id}", id);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
+
+            ThrowIfUserNotExists(user);
 
             _context.Users.Remove(user);
             _context.SaveChanges();
@@ -28,47 +29,35 @@ namespace ASP_Chat.Service.Impl
 
         public User GetUserById(long id)
         {
-            _logger.LogDebug("Getting user with id: {id}", id);
-            User? user = _context.Users.First(u => u.Id == id);
+            _logger.LogDebug("Getting user with id: {Id}", id);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
-            CheckIfUserExists(user);
+            ThrowIfUserNotExists(user);
 
             return user;
         }
 
         public User? GetUserByUsername(string username)
         {
-            _logger.LogDebug("Getting user with username: {username}", username);
+            _logger.LogDebug("Getting user with username: {Username}", username);
             return _context.Users.FirstOrDefault(u => u.Username == username);
         }
 
         public HashSet<User> GetUsersByUsername(string username)
         {
-            _logger.LogDebug("Getting users with same username: {username}", username);
+            _logger.LogDebug("Getting users with same username: {Username}", username);
             return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
         }
 
-        public User UpdateUser(long id, string? username, string? name, string? description)
+        public User UpdateUser(UserRequest request)
         {
-            _logger.LogDebug("Updating user with id: {id}", id);
-            User? user = _context.Users.First(u => u.Id == id);
+            request.Validate();
+            _logger.LogDebug("Updating user with id: {Id}", request.UserId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == request.UserId);
 
-            CheckIfUserExists(user);
+            ThrowIfUserNotExists(user);
 
-            if (!string.IsNullOrEmpty(username)) 
-            {
-                user.Username = username;
-            } 
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                user.Name = name;
-            }
-
-            if (!string.IsNullOrEmpty(description))
-            {
-                user.Description = description;
-            }
+            user.UpdateFieldsIfExists(request);
 
             _context.Users.Update(user);
             _context.SaveChanges();
@@ -76,10 +65,8 @@ namespace ASP_Chat.Service.Impl
             return user;
         }
 
-        private void CheckIfUserExists(User? user)
+        private void ThrowIfUserNotExists(User? user)
         {
-            _logger.LogDebug("Checking if user exists with username: {username}", user.Username);
-
             if (user == null)
             {
                 throw ServerExceptionFactory.UserNotFound();

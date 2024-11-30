@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using ASP_Chat.Controllers.Request;
+using Newtonsoft.Json;
+using System.Xml.Linq;
 
 namespace ASP_Chat.Entity
 {
@@ -23,6 +25,23 @@ namespace ASP_Chat.Entity
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
+        }
+        public void UpdateFieldsIfExists(UserRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Username))
+            {
+                Username = request.Username;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Name))
+            {
+                Name = request.Name;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Description))
+            {
+                Description = request.Description;
+            }
         }
     }
 }

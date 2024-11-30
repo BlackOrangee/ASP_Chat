@@ -1,4 +1,5 @@
-﻿using ASP_Chat.Controllers.Response;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,45 +24,54 @@ namespace ASP_Chat.Controllers
         }
 
         [HttpPost]
-        public IActionResult SendMessage([FromBody] dynamic body)
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult SendMessage([FromBody] MessageRequest request,
+                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
-            return Ok(new ApiResponse(data: _messageService.SendMessage(userId, body.chatId, 
-                                                        body.replyMessageId, body.text, body.file).ToString()));
+            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _messageService.SendMessage(request).ToString()));
         }
 
-        [HttpPatch("{id}")] 
-        public IActionResult EditMessage(long id, [FromBody] dynamic body)
+        [HttpPatch("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult EditMessage(long id, [FromBody] MessageRequest request,
+                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]); 
-            return Ok(new ApiResponse(data: _messageService.EditMessage(userId, id, body.text).ToString()));
+            request.MessageId = id;
+            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _messageService.EditMessage(request).ToString()));
         }
 
-        [HttpDelete("{id}")] 
-        public IActionResult DeleteMessage(long id)
+        [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult DeleteMessage(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]); 
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
             return Ok(new ApiResponse(data: _messageService.DeleteMessage(userId, id).ToString()));
         }
 
-        [HttpGet("{id}")] 
-        public IActionResult GetMessageById(long id)
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult GetMessageById(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]); 
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
             return Ok(new ApiResponse(data: _messageService.GetMessage(userId, id).ToString()));
         }
 
-        [HttpGet("chat/{id}")] 
-        public IActionResult GetMessagesByChatId(long id, [FromQuery] long? lastMessageId)
+        [HttpGet("chat/{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult GetMessagesByChatId(long id, [FromQuery] long? lastMessageId,
+                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]); 
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
             return Ok(new ApiResponse(data: _messageService.GetMessages(userId, id, lastMessageId).ToString()));
         }
 
-        [HttpPut("{id}")] 
-        public IActionResult LikeMessage(long id)
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult LikeMessage(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            long userId = _jwtService.GetUserIdFromToken(Request.Headers["Authorization"]);
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _messageService.SetReadedMessageStatus(userId, id);
             return Ok(new ApiResponse(success: true));
         }
