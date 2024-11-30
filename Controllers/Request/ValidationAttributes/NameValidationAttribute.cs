@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ASP_Chat.Controllers.ValidationAttributes
+namespace ASP_Chat.Controllers.Request.ValidationAttributes
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false)]
     public class NameValidationAttribute : ValidationAttribute

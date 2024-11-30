@@ -9,13 +9,6 @@
                 StatusCodes.InternalServerError);
         }
 
-        public static ServerException EmptyCredentials()
-        {
-            return new ServerException("Credentials are empty",
-                ExceptionCodes.EmptyCredentials,
-                StatusCodes.BadRequest);
-        }
-
         public static ServerException InvalidCredentials()
         {
             return new ServerException("Invalid credentials",
@@ -128,39 +121,11 @@
                 StatusCodes.BadRequest);
         }
 
-        public static ServerException GroupNameIsEmpty()
-        {
-            return new ServerException("Group name is empty",
-                ExceptionCodes.GroupNameIsEmpty,
-                StatusCodes.BadRequest);
-        }
-
-        public static ServerException ChannelNameIsEmpty()
-        {
-            return new ServerException("Channel name is empty",
-                ExceptionCodes.ChannelNameIsEmpty,
-                StatusCodes.BadRequest);
-        }
-
-        public static ServerException ChannelTagIsEmpty()
-        {
-            return new ServerException("Channel tag is empty",
-                ExceptionCodes.ChannelTagIsEmpty,
-                StatusCodes.BadRequest);
-        }
-
         public static ServerException MessageNotFound()
         {
             return new ServerException("Message not found",
                 ExceptionCodes.MessageNotFound,
                 StatusCodes.NotFound);
-        }
-
-        public static ServerException MessageIsEmpty()
-        {
-            return new ServerException("Message is empty",
-                ExceptionCodes.MessageIsEmpty,
-                StatusCodes.BadRequest);
         }
 
         public static ServerException NoPermissionToSendMessage()
@@ -183,20 +148,5 @@
                 ExceptionCodes.NoPermissionToDeleteMessage,
                 StatusCodes.Forbidden);
         }
-
-        public static ServerException InvalidInput(string message)
-        {
-            return new ServerException(message,
-                ExceptionCodes.InvalidInput,
-                StatusCodes.BadRequest);
-        }
-
-        public static ServerException FeldAreRequired(string message)
-        {
-            return new ServerException("Field are required.\n " + message,
-                ExceptionCodes.FeldAreRequired,
-                StatusCodes.BadRequest); ;
-        }
-
     }
 }

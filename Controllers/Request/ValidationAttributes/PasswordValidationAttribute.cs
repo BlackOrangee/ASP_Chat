@@ -1,18 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ASP_Chat.Controllers.ValidationAttributes
+namespace ASP_Chat.Controllers.Request.ValidationAttributes
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, Inherited = false)]
     public class PasswordValidationAttribute : ValidationAttribute
     {
         protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            if (value is string password 
-                && password.Length >= 8 
-                && password.Length <= 20 
-                && HasAtLeastOneUppercaseLetter(password) 
-                && HasAtLeastOneLowercaseLetter(password) 
-                && HasAtLeastOneDigit(password) 
+            if (value is string password
+                && password.Length >= 8
+                && password.Length <= 20
+                && HasAtLeastOneUppercaseLetter(password)
+                && HasAtLeastOneLowercaseLetter(password)
+                && HasAtLeastOneDigit(password)
                 && HasAtLeastOneSpecialCharacter(password))
             {
                 return ValidationResult.Success!;

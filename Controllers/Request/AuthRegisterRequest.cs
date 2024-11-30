@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using ASP_Chat.Controllers.ValidationAttributes;
+﻿using ASP_Chat.Controllers.Request.ValidationAttributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace ASP_Chat.Controllers.Request
 {

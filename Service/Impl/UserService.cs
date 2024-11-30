@@ -49,11 +49,10 @@ namespace ASP_Chat.Service.Impl
             return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
         }
 
-        public User UpdateUser(UserRequest request)
+        public User UpdateUser(long userId, UserUpdateRequest request)
         {
-            request.Validate();
-            _logger.LogDebug("Updating user with id: {Id}", request.UserId);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == request.UserId);
+            _logger.LogDebug("Updating user with id: {Id}", userId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
             ThrowIfUserNotExists(user);
 

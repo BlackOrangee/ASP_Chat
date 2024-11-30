@@ -1,7 +1,7 @@
-﻿using ASP_Chat.Enums;
+﻿using ASP_Chat.Controllers.Request.ValidationAttributes;
+using ASP_Chat.Controllers.Request.ValidationAttributes.RequiredAtributes;
+using ASP_Chat.Enums;
 using System.ComponentModel.DataAnnotations;
-using ASP_Chat.Controllers.ValidationAttributes.RequiredAtributes;
-using ASP_Chat.Controllers.ValidationAttributes;
 
 namespace ASP_Chat.Controllers.Request
 {

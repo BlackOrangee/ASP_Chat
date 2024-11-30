@@ -26,7 +26,7 @@ namespace ASP_Chat.Entity
         {
             return JsonConvert.SerializeObject(this);
         }
-        public void UpdateFieldsIfExists(UserRequest request)
+        public void UpdateFieldsIfExists(UserUpdateRequest request)
         {
             if (!string.IsNullOrWhiteSpace(request.Username))
             {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ASP_Chat.Controllers.ValidationAttributes.RequiredAtributes
+namespace ASP_Chat.Controllers.Request.ValidationAttributes.RequiredAtributes
 {
     public class RequiredIfFieldValueBetwinAttribute : ValidationAttribute
     {
