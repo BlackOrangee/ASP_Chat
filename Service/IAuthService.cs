@@ -4,8 +4,8 @@ namespace ASP_Chat.Service
 {
     public interface IAuthService
     {
-        string Login(AuthRequest request);
-        string Register(AuthRequest request);
-        string ChangePassword(AuthRequest userRequest);
+        string Login(AuthLoginRequest request);
+        string Register(AuthRegisterRequest request);
+        string ChangePassword(long id, AuthChangePasswordRequest request);
     }
 }

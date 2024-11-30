@@ -2,7 +2,9 @@
 {
     public enum ExceptionCodes
     {
-        SecretKeyNotSet = 0,
+        InternalServerError = 0,
+        ValidationError,
+        SecretKeyNotSet,
         EmptyCredentials,
         InvalidCredentials,
         InvalidToken,

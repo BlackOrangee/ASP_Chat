@@ -8,16 +8,16 @@ namespace ASP_Chat.Controllers.Response
         public object? Data { get; set; }
         public string? Message { get; set; }
         public int? ErrorCode { get; set; }
-        public string? Error { get; set; }
+        public List<string>? Errors { get; set; }
 
         public ApiResponse(bool success = true, object? data = null,
-            string? message = null, int? errorCode = null, string? error = null)
+            string? message = null, int? errorCode = null, List<string>? errors = null)
         {
             Success = success;
             Data = data;
             Message = message;
             ErrorCode = errorCode;
-            Error = error;
+            Errors = errors;
         }
 
         public override string ToString()

@@ -26,18 +26,16 @@ namespace ASP_Chat.Controllers
 
         [HttpPost("register")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult Register([FromBody] AuthRequest request)
+        public IActionResult Register([FromBody] AuthRegisterRequest request)
         {
-            request.RegisterValidate();
             _logger.LogInformation("Username: {Username}. Try to register.", request.Username);
             return Ok(new ApiResponse(message: _authService.Register(request)));
         }
 
         [HttpPost("login")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult Login([FromBody] AuthRequest request)
+        public IActionResult Login([FromBody] AuthLoginRequest request)
         {
-            request.LoginValidate();
             _logger.LogInformation("Username: {Username}. Try to login.", request.Username);
             return Ok(new ApiResponse(data: new { token = _authService.Login(request) }));
         }
@@ -45,12 +43,11 @@ namespace ASP_Chat.Controllers
         [Authorize]
         [HttpPost("change-password")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult ChangePassword([FromBody] AuthRequest request, 
+        public IActionResult ChangePassword([FromBody] AuthChangePasswordRequest request, 
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.ChangePasswordValidate();
-            request.Id = _jwtService.GetUserIdFromToken(authorizationHeader);
-            _logger.LogInformation("UserId: {Id}. Try to change password.", request.Id);
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            _logger.LogInformation("UserId: {Id}. Try to change password.", userId);
 
             return Ok(new ApiResponse( message: _authService.ChangePassword(request)));
         }

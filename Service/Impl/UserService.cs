@@ -65,7 +65,7 @@ namespace ASP_Chat.Service.Impl
             return user;
         }
 
-        private void ThrowIfUserNotExists(User? user)
+        public static void ThrowIfUserNotExists(User? user)
         {
             if (user == null)
             {
