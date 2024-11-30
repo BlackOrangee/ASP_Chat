@@ -13,11 +13,11 @@ namespace ASP_Chat.Controllers.Request
         [Required (ErrorMessage = "Users is required")]
         public ICollection<long> Users { get; set; }
 
-        [RequiredIfFieldValueBetwinAttribute(nameof(TypeId), (long)ChatTypes.Channel, ErrorMessage = "Tag is required")]
+        [RequiredIfFieldValueBetwin(nameof(TypeId), (long)ChatTypes.Channel)]
         [UsernameValidation]
         public string? Tag { get; set; }
 
-        [RequiredIfFieldValueBetwinAttribute(nameof(TypeId), (long)ChatTypes.Group, (long)ChatTypes.Channel, ErrorMessage = "Name is required")]
+        [RequiredIfFieldValueBetwin(nameof(TypeId), (long)ChatTypes.Group, (long)ChatTypes.Channel)]
         [NameValidation]
         public string? Name { get; set; }
 

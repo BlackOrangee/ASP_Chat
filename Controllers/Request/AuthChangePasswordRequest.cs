@@ -9,6 +9,7 @@ namespace ASP_Chat.Controllers.Request
         [PasswordValidation]
         public string Password { get; set; }
 
+        [NotEqualTo(nameof(Password))]
         [Required(ErrorMessage = "New password is required")]
         [PasswordValidation]
         public string NewPassword { get; set; }
