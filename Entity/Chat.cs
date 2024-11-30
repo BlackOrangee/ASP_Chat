@@ -75,7 +75,7 @@ namespace ASP_Chat.Entity
             return true;
         }
 
-        public void UpdateFieldsIfExists(ChatRequest request)
+        public void UpdateFieldsIfExists(ChatUpdateRequest request)
         {
             if (!string.IsNullOrWhiteSpace(request.Tag) && IsChatChannel())
             {
@@ -113,7 +113,7 @@ namespace ASP_Chat.Entity
             Users.Remove(user);
         }
 
-        public void MakeChanelChat(ChatRequest request, Media? image)
+        public void MakeChanelChat(ChatCreateRequest request, Media? image)
         {
             if (string.IsNullOrEmpty(request.Description)) 
             {
@@ -126,7 +126,7 @@ namespace ASP_Chat.Entity
             Image = image;
         }
 
-        public void MakeGroupChat(ChatRequest request, Media? image)
+        public void MakeGroupChat(ChatCreateRequest request, Media? image)
         {
             if (string.IsNullOrEmpty(request.Description))
             {

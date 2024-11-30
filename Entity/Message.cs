@@ -44,16 +44,13 @@ namespace ASP_Chat.Entity
             IsEdited = true;
         }
 
-        public void AddText(MessageRequest request)
+        public void AddTextOrFileIfExists(MessageSendRequest request)
         {
             if (request.Text != null)
             {
                 Text = request.Text;
             }
-        }
 
-        public void AddFile(MessageRequest request)
-        {
             if (request.File != null)
             {
                 //TODO: file upload

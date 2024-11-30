@@ -38,19 +38,18 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
-        public string AddModeratorToChat(ChatRequest request)
+        public string AddModeratorToChat(long userId, long chatId, ChatAddUsersRequest request)
         {
-            request.AddUserValidation();
-            _logger.LogDebug("Adding moderators to chat: {ChatId}", request.ChatId);
+            _logger.LogDebug("Adding moderators to chat: {ChatId}", chatId);
 
-            Chat? chat = GetChat(request.ChatId);
+            Chat? chat = GetChat(chatId);
 
             if (chat.IsChatP2P())
             {
                 throw ServerExceptionFactory.ChatCanNotHaveModerators();
             }
 
-            User admin = _userService.GetUserById(request.UserId);
+            User admin = _userService.GetUserById(userId);
 
             if (!chat.IsUserAdmin(admin))
             {
@@ -81,19 +80,18 @@ namespace ASP_Chat.Service.Impl
             return "Moderators added successfully";
         }
 
-        public string AddUsersToChat(ChatRequest request)
+        public string AddUsersToChat(long userId, long chatId, ChatAddUsersRequest request)
         {
-            request.AddUserValidation();
-            _logger.LogDebug("Adding users to chat: {ChatId}", request.ChatId);
+            _logger.LogDebug("Adding users to chat: {ChatId}", chatId);
 
-            Chat? chat = GetChat(request.ChatId);
+            Chat? chat = GetChat(chatId);
 
             if (chat.IsChatP2P())
             {
                 throw ServerExceptionFactory.ChatCanNotHaveUsers();
             }
 
-            User chatUser = _userService.GetUserById(request.UserId);
+            User chatUser = _userService.GetUserById(userId);
 
             if (!chat.IsUserInChat(chatUser))
             {
@@ -119,11 +117,10 @@ namespace ASP_Chat.Service.Impl
             return "Users added successfully";
         }
 
-        public Chat CreateChat(ChatRequest request)
+        public Chat CreateChat(long userId, ChatCreateRequest request)
         {
-            request.CreateValidation();
-            _logger.LogDebug("Creating chat with admin id: {AdminId}", request.UserId);
-            User admin = _userService.GetUserById(request.UserId);
+            _logger.LogDebug("Creating chat with admin id: {AdminId}", userId);
+            User admin = _userService.GetUserById(userId);
 
             ChatType? chatTypeObj = _context.ChatTypes.FirstOrDefault(ct => ct.Id == request.TypeId);
             if (chatTypeObj == null)
@@ -158,7 +155,7 @@ namespace ASP_Chat.Service.Impl
         }
 
         private Chat CreateChannel(Chat chat, HashSet<User> users,
-            ChatRequest request, Media? image)
+            ChatCreateRequest request, Media? image)
         {
             _logger.LogDebug("Creating channel with admin id: {AdminId}", chat.Admin.Id);
 
@@ -177,7 +174,7 @@ namespace ASP_Chat.Service.Impl
         }
 
         private Chat CreateGroupChat(Chat chat, HashSet<User> users,
-            ChatRequest request, Media? image)
+            ChatCreateRequest request, Media? image)
         {
             _logger.LogDebug("Creating group with admin id: {AdminId}", chat.Admin.Id);
 
@@ -275,12 +272,12 @@ namespace ASP_Chat.Service.Impl
             return user.Chats;
         }
 
-        public Chat UpdateChatInfo(ChatRequest request)
+        public Chat UpdateChatInfo(long userId, long chatId, ChatUpdateRequest request)
         {
-            _logger.LogDebug("Updating chat with id: {ChatId}", request.ChatId);
-            User user = _userService.GetUserById(request.UserId);
+            _logger.LogDebug("Updating chat with id: {ChatId}", chatId);
+            User user = _userService.GetUserById(userId);
 
-            Chat? chat = GetChat(request.ChatId);
+            Chat? chat = GetChat(chatId);
 
             if (chat.IsChatP2P())
             {

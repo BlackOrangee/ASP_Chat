@@ -1,5 +1,6 @@
 ﻿using ASP_Chat.Controllers.Request;
 using ASP_Chat.Controllers.Response;
+using ASP_Chat.Entity;
 using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,12 +25,12 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult CreateChat([FromBody] ChatRequest request, 
+        public IActionResult CreateChat([FromBody] ChatCreateRequest request, 
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Creating new chat");
-            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _chatService.CreateChat(request)));
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _chatService.CreateChat(userId, request)));
         }
 
         [HttpGet("{id}")]
@@ -53,32 +54,32 @@ namespace ASP_Chat.Controllers
 
         [HttpPost("{id}/add/moderators")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult AddModerator(long id, [FromBody] ChatRequest request,
+        public IActionResult AddModerator(long id, [FromBody] ChatAddUsersRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.ChatId = id;
-            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _chatService.AddModeratorToChat(request).ToString()));
+            long chatId = id;
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _chatService.AddModeratorToChat(userId, chatId, request).ToString()));
         }
 
         [HttpPost("{id}/add/users")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult AddUsers(long id, [FromBody] ChatRequest request,
+        public IActionResult AddUsers(long id, [FromBody] ChatAddUsersRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.ChatId = id;
-            request.UserId= _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _chatService.AddUsersToChat(request).ToString()));
+            long chatId = id;
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _chatService.AddUsersToChat(userId, chatId, request).ToString()));
         }
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult UpdateChat(long id, [FromBody] ChatRequest request,
+        public IActionResult UpdateChat(long id, [FromBody] ChatUpdateRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.ChatId = id;
-            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _chatService.UpdateChatInfo(request).ToString()));
+            long chatId = id;
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _chatService.UpdateChatInfo(userId, chatId, request).ToString()));
         }
 
         [HttpGet("{id}/join")]

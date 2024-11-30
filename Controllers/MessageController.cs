@@ -25,21 +25,21 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult SendMessage([FromBody] MessageRequest request,
+        public IActionResult SendMessage([FromBody] MessageSendRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _messageService.SendMessage(request).ToString()));
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _messageService.SendMessage(userId, request).ToString()));
         }
 
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult EditMessage(long id, [FromBody] MessageRequest request,
+        public IActionResult EditMessage(long id, [FromBody] MessageEditRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
-            request.MessageId = id;
-            request.UserId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _messageService.EditMessage(request).ToString()));
+            long messageId = id;
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _messageService.EditMessage(userId, messageId, request).ToString()));
         }
 
         [HttpDelete("{id}")]
