@@ -7,6 +7,11 @@ namespace ASP_Chat.Controllers.Request.ValidationAttributes
     {
         protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
+            if (value == null)
+            {
+                return ValidationResult.Success;
+            }
+
             if (value is string name && name.Length >= 4 && name.Length <= 10)
             {
                 return ValidationResult.Success!;

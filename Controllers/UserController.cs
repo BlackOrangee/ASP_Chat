@@ -27,7 +27,7 @@ namespace ASP_Chat.Controllers
         public IActionResult GetUserById(long id)
         {
             _logger.LogInformation("Getting user with id: {Id}", id);
-            return Ok( new ApiResponse(data: _userService.GetUserById(id).ToString()));
+            return Ok( new ApiResponse(data: _userService.GetUserById(id)));
         }
 
         [HttpGet]
@@ -45,7 +45,7 @@ namespace ASP_Chat.Controllers
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("Updating user with id: {Id}", userId);
-            return Ok(new ApiResponse(data: _userService.UpdateUser(userId, request).ToString()));
+            return Ok(new ApiResponse(data: _userService.UpdateUser(userId, request)));
         }
 
         [HttpDelete]

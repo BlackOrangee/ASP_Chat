@@ -20,7 +20,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Deleting user with id: {Id}", id);
             User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
-            ThrowIfUserNotExists(user);
+            ThrowExceptionIfUserNotExists(user);
 
             _context.Users.Remove(user);
             _context.SaveChanges();
@@ -32,7 +32,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Getting user with id: {Id}", id);
             User? user = _context.Users.FirstOrDefault(u => u.Id == id);
 
-            ThrowIfUserNotExists(user);
+            ThrowExceptionIfUserNotExists(user);
 
             return user;
         }
@@ -54,7 +54,9 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Updating user with id: {Id}", userId);
             User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
-            ThrowIfUserNotExists(user);
+            ThrowExceptionIfUserNotExists(user);
+
+            ThrowExceptionIfUsernameTaken(request);
 
             user.UpdateFieldsIfExists(request);
 
@@ -64,11 +66,20 @@ namespace ASP_Chat.Service.Impl
             return user;
         }
 
-        public static void ThrowIfUserNotExists(User? user)
+        public static void ThrowExceptionIfUserNotExists(User? user)
         {
             if (user == null)
             {
                 throw ServerExceptionFactory.UserNotFound();
+            }
+        }
+
+        private void ThrowExceptionIfUsernameTaken(UserUpdateRequest request)
+        {
+            if (!string.IsNullOrWhiteSpace(request.Username)
+                && _context.Users.FirstOrDefault(u => u.Username == request.Username) != null)
+            {
+                throw ServerExceptionFactory.UsernameTaken(request.Username);
             }
         }
     }

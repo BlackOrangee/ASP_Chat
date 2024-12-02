@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ASP_Chat.Controllers.Response;
-using ASP_Chat.Service.Impl;
 using ASP_Chat.Controllers.Request;
 
 
@@ -15,9 +14,9 @@ namespace ASP_Chat.Controllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IAuthService _authService;
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
 
-        public AuthController(ILogger<AuthController> logger, IAuthService authService, JwtService jwtService)
+        public AuthController(ILogger<AuthController> logger, IAuthService authService, IJwtService jwtService)
         {
             _logger = logger;
             _authService = authService;
@@ -49,7 +48,7 @@ namespace ASP_Chat.Controllers
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("UserId: {Id}. Try to change password.", userId);
 
-            return Ok(new ApiResponse( message: _authService.ChangePassword(request)));
+            return Ok(new ApiResponse( message: _authService.ChangePassword(userId, request)));
         }
     }
 }

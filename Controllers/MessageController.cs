@@ -29,7 +29,7 @@ namespace ASP_Chat.Controllers
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _messageService.SendMessage(userId, request).ToString()));
+            return Ok(new ApiResponse(data: _messageService.SendMessage(userId, request)));
         }
 
         [HttpPatch("{id}")]
@@ -39,7 +39,7 @@ namespace ASP_Chat.Controllers
         {
             long messageId = id;
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _messageService.EditMessage(userId, messageId, request).ToString()));
+            return Ok(new ApiResponse(data: _messageService.EditMessage(userId, messageId, request)));
         }
 
         [HttpDelete("{id}")]
@@ -47,7 +47,7 @@ namespace ASP_Chat.Controllers
         public IActionResult DeleteMessage(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
-            return Ok(new ApiResponse(data: _messageService.DeleteMessage(userId, id).ToString()));
+            return Ok(new ApiResponse(data: _messageService.DeleteMessage(userId, id)));
         }
 
         [HttpGet("{id}")]
@@ -55,7 +55,7 @@ namespace ASP_Chat.Controllers
         public IActionResult GetMessageById(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
-            return Ok(new ApiResponse(data: _messageService.GetMessage(userId, id).ToString()));
+            return Ok(new ApiResponse(data: _messageService.GetMessage(userId, id)));
         }
 
         [HttpGet("chat/{id}")]
@@ -64,7 +64,7 @@ namespace ASP_Chat.Controllers
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader); 
-            return Ok(new ApiResponse(data: _messageService.GetMessages(userId, id, lastMessageId).ToString()));
+            return Ok(new ApiResponse(data: _messageService.GetMessages(userId, id, lastMessageId)));
         }
 
         [HttpPut("{id}")]

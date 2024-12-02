@@ -14,7 +14,7 @@ namespace ASP_Chat.Controllers.Request
         public ICollection<long> Users { get; set; }
 
         [RequiredIfFieldValueBetwin(nameof(TypeId), (long)ChatTypes.Channel)]
-        [UsernameValidation]
+        [UniqueNameValidation]
         public string? Tag { get; set; }
 
         [RequiredIfFieldValueBetwin(nameof(TypeId), (long)ChatTypes.Group, (long)ChatTypes.Channel)]

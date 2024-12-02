@@ -1,8 +1,4 @@
-﻿using System;
-using ASP_Chat.Controllers.Request;
-using ASP_Chat.Enums;
-using ASP_Chat.Exceptions;
-using Newtonsoft.Json;
+﻿using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Entity
 {
@@ -17,11 +13,6 @@ namespace ASP_Chat.Entity
         public bool IsEdited { get; set; } = false;
         public bool IsReaded { get; set; } = false;
         public ICollection<Media>? Media { get; set; } = new HashSet<Media>();
-
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
 
         public bool IsUserSender(User user)
         {

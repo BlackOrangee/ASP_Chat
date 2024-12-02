@@ -148,5 +148,12 @@
                 ExceptionCodes.NoPermissionToDeleteMessage,
                 StatusCodes.Forbidden);
         }
+
+        public static ServerException UsernameTaken(string username)
+        {
+            return new ServerException($"Username {username} is taken",
+                ExceptionCodes.UserAlreadyExists,
+                StatusCodes.BadRequest);
+        }
     }
 }

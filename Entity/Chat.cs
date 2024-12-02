@@ -1,7 +1,4 @@
-﻿using ASP_Chat.Exceptions;
-using System;
-using Newtonsoft.Json;
-using ASP_Chat.Enums;
+﻿using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Entity
@@ -19,11 +16,6 @@ namespace ASP_Chat.Entity
         public ICollection<User> Users { get; set; } = new HashSet<User>();
         public ICollection<Message>? Messages { get; set; } = new HashSet<Message>();
         public ICollection<User>? Moderators { get; set; } = new HashSet<User>();
-
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
 
         public bool IsChatP2P()
         {

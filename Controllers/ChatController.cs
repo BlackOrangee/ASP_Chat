@@ -39,7 +39,7 @@ namespace ASP_Chat.Controllers
         {
             _logger.LogInformation("Getting chat with id: {Id}", id);
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok( new ApiResponse(data: _chatService.GetChatById(userId, id).ToString()));
+            return Ok( new ApiResponse(data: _chatService.GetChatById(userId, id)));
         }
 
         [HttpGet]
@@ -49,7 +49,7 @@ namespace ASP_Chat.Controllers
         {
             _logger.LogInformation("Getting all chats");
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok( new ApiResponse(data: _chatService.GetChats(userId, name, tag).ToString()));
+            return Ok( new ApiResponse(data: _chatService.GetChats(userId, name, tag)));
         }
 
         [HttpPost("{id}/add/moderators")]

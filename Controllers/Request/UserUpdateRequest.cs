@@ -7,7 +7,7 @@ namespace ASP_Chat.Controllers.Request
         [NameValidation]
         public string? Name { get; set; }
 
-        [UsernameValidation]
+        [UniqueNameValidation]
         public string? Username { get; set; }
 
         public string? Description { get; set; }
