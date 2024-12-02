@@ -1,5 +1,6 @@
 ﻿using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
+using System.Text.Json.Serialization;
 
 namespace ASP_Chat.Entity
 {
@@ -9,11 +10,19 @@ namespace ASP_Chat.Entity
         public long AdminId { get; set; }
         public ChatType Type { get; set; }
         public User Admin { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Tag { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Name { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Description { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Media? Image { get; set; }
-        public ICollection<User> Users { get; set; } = new HashSet<User>();
+        public ICollection<User> Users { get; set; }
         public ICollection<Message>? Messages { get; set; } = new HashSet<Message>();
         public ICollection<User>? Moderators { get; set; } = new HashSet<User>();
 
@@ -44,12 +53,43 @@ namespace ASP_Chat.Entity
 
         public bool IsUserModerator(User user)
         {
-            return Moderators != null && Moderators.Contains(user);
+            if (Moderators == null) 
+            { 
+                return false; 
+            }
+
+            foreach (User u in Moderators)
+            {
+                if (u.Id == user.Id)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public bool IsUserInChat(User user)
         {
-            return Users.Contains(user);
+            foreach (var item in Users)
+            {
+                Console.WriteLine(item.Id);
+            }
+
+            if (Users == null)
+            {
+                Console.WriteLine("Users is null");
+                return false;
+            }
+
+            foreach (User u in Users)
+            {
+                if (u.Id == user.Id)
+                {
+                    return true;
+                }
+            }
+            Console.WriteLine("User not in chat");
+            return false;
         }
 
         public bool IsChatPublic()

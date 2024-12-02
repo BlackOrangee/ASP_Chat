@@ -2,6 +2,7 @@
 using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace ASP_Chat.Service.Impl
@@ -21,7 +22,11 @@ namespace ASP_Chat.Service.Impl
 
         private Chat GetChat(long id)
         {
-            Chat? chat = _context.Chats.FirstOrDefault(c => c.Id == id);
+            Chat? chat = _context.Chats.Include(c => c.Type)
+                                        .Include(c => c.Users)
+                                        .Include(c => c.Moderators)
+                                        .Include(c => c.Messages)
+                                        .FirstOrDefault(c => c.Id == id);
             if (chat == null)
             {
                 throw ServerExceptionFactory.ChatNotFound();
@@ -166,9 +171,9 @@ namespace ASP_Chat.Service.Impl
 
         private void ThrowExceptionIfP2PChatExists(ICollection<User> usersSet)
         {
-            if (null != _context.Chats.FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
-                                                        && c.Users.Contains(usersSet.First()) 
-                                                        && c.Users.Contains(usersSet.Last())))
+            if (null != _context.Chats.FirstOrDefault(c => c.IsChatP2P()
+                                                        && c.IsUserInChat(usersSet.First())
+                                                        && c.IsUserInChat(usersSet.Last())))
             {
                 throw ServerExceptionFactory.ChatAlreadyExists();
             }
@@ -229,10 +234,10 @@ namespace ASP_Chat.Service.Impl
 
             Chat chat = GetChat(chatId);
 
-            if (!chat.IsUserInChat(user))
-            {
-                throw ServerExceptionFactory.UserNotInChat();
-            }
+            //if (!chat.IsUserInChat(user))
+            //{
+            //    throw ServerExceptionFactory.UserNotInChat();
+            //}
 
             return chat;
         }
@@ -244,18 +249,18 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<Chat> userGroupAndChanels = _context.Chats.Where(
                     c => c.Type.Id != (long)ChatTypes.P2P
-                    && c.Users.Contains(user)
+                    && c.IsUserInChat(user)
                     && c.Name.Contains(name)
                 ).ToHashSet();
             
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)ChatTypes.P2P
-                    && c.Users.Contains(user)
+                    c => c.IsChatP2P()
+                    && c.IsUserInChat(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name)
                 ).ToHashSet();
 
             HashSet<Chat> ChanelsToJoin = _context.Chats.Where(
-                    c => c.Type.Id == (long)ChatTypes.Channel
+                    c => c.IsChatChannel()
                     && c.Name.Contains(name)
                 ).ToHashSet();
 
@@ -269,13 +274,13 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.Type.Id == (long)ChatTypes.P2P
-                    && c.Users.Contains(user)
+                    c => c.IsChatP2P()
+                    && c.IsUserInChat(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag)
                 ).ToHashSet();
 
             HashSet<Chat> Chanels = _context.Chats.Where(
-                    c => c.Type.Id == (long)ChatTypes.Channel
+                    c => c.IsChatChannel()
                     && c.Tag.Contains(tag)
                 ).ToHashSet();
 
