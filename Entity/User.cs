@@ -1,6 +1,5 @@
 ﻿using ASP_Chat.Controllers.Request;
-using Newtonsoft.Json;
-using System.Xml.Linq;
+using System.Text.Json.Serialization;
 
 namespace ASP_Chat.Entity
 {
@@ -22,11 +21,7 @@ namespace ASP_Chat.Entity
         [JsonIgnore]
         public ICollection<Message> Messages { get; set; } = new HashSet<Message>();
 
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
-        public void UpdateFieldsIfExists(UserRequest request)
+        public void UpdateFieldsIfExists(UserUpdateRequest request)
         {
             if (!string.IsNullOrWhiteSpace(request.Username))
             {

@@ -1,10 +1,12 @@
 using ASP_Chat;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using ASP_Chat.Service;
 using ASP_Chat.Service.Impl;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -28,6 +30,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterType<ChatService>().As<IChatService>().SingleInstance();
     containerBuilder.RegisterType<MessageService>().As<IMessageService>().SingleInstance();
     containerBuilder.RegisterType<JwtService>().As<IJwtService>().SingleInstance();
+    containerBuilder.RegisterType<PasswordHasher<User>>().As<IPasswordHasher<User>>().InstancePerLifetimeScope();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -49,15 +52,16 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
+        ValidateIssuer = false,
+        ValidateAudience = false,
         ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        ClockSkew = TimeSpan.Zero
     };
 });
 
 var app = builder.Build();
 
-app.UseMiddleware<ServerExceptionMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -73,6 +77,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseMiddleware<ServerExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -80,6 +85,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

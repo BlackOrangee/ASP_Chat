@@ -23,28 +23,36 @@ namespace ASP_Chat.Service.Impl
             _jwtService = jwtService;
         }
 
-        private void ValidateUser(User? user, AuthRequest request)
+        private void ValidateUser(User user, AuthLoginRequest request)
         {
-            if (user == null
-                || _passwordHasher.VerifyHashedPassword(user, user.Password, request.Password)
-                == PasswordVerificationResult.Failed)
+            var result = _passwordHasher.VerifyHashedPassword(user, user.Password, request.Password);
+            if (result == PasswordVerificationResult.Failed)
             {
                 throw ServerExceptionFactory.InvalidCredentials();
             }
         }
 
-        public string Login(AuthRequest request)
+        public string Login(AuthLoginRequest request)
         {
             _logger.LogDebug("Username: {Username}. Try to login.", request.Username);
 
             User? user = _userService.GetUserByUsername(request.Username);
 
-            ValidateUser(user, request);
+            if (user == null)
+            {
+                throw ServerExceptionFactory.InvalidCredentials();
+            }
+
+            var result = _passwordHasher.VerifyHashedPassword(user, user.Password, request.Password);
+            if (result == PasswordVerificationResult.Failed)
+            {
+                throw ServerExceptionFactory.InvalidCredentials();
+            }
 
             return _jwtService.GenerateJwtToken(user.Id.ToString());
         }
 
-        public string Register(AuthRequest request)
+        public string Register(AuthRegisterRequest request)
         {
             _logger.LogDebug("Username: {Username}. Try to register.", request.Username);
 
@@ -58,19 +66,23 @@ namespace ASP_Chat.Service.Impl
             User newUser = new User { Username = request.Username, Name = request.Name };
             newUser.Password = _passwordHasher.HashPassword(newUser, request.Password);
 
-            _context.Users.Add(user);
+            _context.Users.Add(newUser);
             _context.SaveChanges();
 
             return "User registered successfully";
         }
 
-        public string ChangePassword(AuthRequest request)
+        public string ChangePassword(long id, AuthChangePasswordRequest request)
         {
-            _logger.LogDebug("UserId: {Id}. Try to change password.", request.Id);
+            _logger.LogDebug("UserId: {Id}. Try to change password.", id);
 
-            User user = _userService.GetUserById(request.Id);
+            User user = _userService.GetUserById(id);
 
-            ValidateUser(user, request);
+            var result = _passwordHasher.VerifyHashedPassword(user, user.Password, request.Password);
+            if (result == PasswordVerificationResult.Failed)
+            {
+                throw ServerExceptionFactory.InvalidCredentials();
+            }
 
             user.Password = _passwordHasher.HashPassword(user, request.NewPassword);
 

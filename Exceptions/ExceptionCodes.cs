@@ -2,11 +2,12 @@
 {
     public enum ExceptionCodes
     {
-        SecretKeyNotSet = 0,
-        EmptyCredentials,
+        InternalServerError = 0,
+        ValidationError,
+        SecretKeyNotSet,
         InvalidCredentials,
         InvalidToken,
-        InvalidInput,
+        InvalidP2PChatUsersCount,
         UserNotFound,
         UserNotAdmin,
         UserNotInChat,
@@ -17,18 +18,14 @@
         UsersNotFound,
         ChatNotFound,
         ChatNotPublic,
+        ChatAlreadyExists,
         ChatTypeNotFound,
         ChatCanNotHaveUsers,
         ChatCanNotHaveModerators,
         ChatCanNotBeUpdated,
-        GroupNameIsEmpty,
-        ChannelNameIsEmpty,
-        ChannelTagIsEmpty,
         MessageNotFound,
-        MessageIsEmpty,
         NoPermissionToSendMessage,
         NoPermissionToEditMessage,
         NoPermissionToDeleteMessage,
-        FeldAreRequired,
     }
 }

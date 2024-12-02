@@ -38,12 +38,11 @@ namespace ASP_Chat.Service.Impl
             return "Message deleted successfully";
         }
 
-        public Message EditMessage(MessageRequest request)
+        public Message EditMessage(long userId, long messageId, MessageEditRequest request)
         {
-            request.SendMessageValidation();
-            _logger.LogDebug("Editing message with id: {MessageId}", request.MessageId);
-            Message message = GetMessage(request.UserId, request.MessageId);
-            User user = _userService.GetUserById(request.UserId);
+            _logger.LogDebug("Editing message with id: {MessageId}", messageId);
+            Message message = GetMessage(userId, messageId);
+            User user = _userService.GetUserById(userId);
 
             if (!message.IsUserHavePermissionToModifyMessage(user))
             {
@@ -58,12 +57,11 @@ namespace ASP_Chat.Service.Impl
             return message;
         }
 
-        public Message SendMessage(MessageRequest request)
+        public Message SendMessage(long userId, MessageSendRequest request)
         {
-            request.SendMessageValidation();
             _logger.LogDebug("Sending message to chat with id: {ChatId}", request.ChatId);
-            Chat chat = _chatService.GetChatById(request.UserId, request.ChatId.Value);
-            User user = _userService.GetUserById(request.UserId);
+            Chat chat = _chatService.GetChatById(userId, request.ChatId);
+            User user = _userService.GetUserById(userId);
 
             if (!chat.IsUserHavePermissionToSendMessage(user))
             {
@@ -77,13 +75,11 @@ namespace ASP_Chat.Service.Impl
                 Date = DateTime.Now
             };
 
-            message.AddText(request);
-
-            message.AddFile(request);
+            message.AddTextOrFileIfExists(request);
 
             if (request.ReplyMessageId != null)
             {
-                message.ReplyMessage = GetMessage(request.UserId, request.ReplyMessageId.Value);
+                message.ReplyMessage = GetMessage(userId, request.ReplyMessageId.Value);
             }
 
             message.AddToChat(chat);
