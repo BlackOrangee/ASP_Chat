@@ -30,7 +30,7 @@ namespace ASP_Chat.Service.Impl
             return chat;
         }
 
-        private void ThrowIfUsersNotFound(ICollection<User> users)
+        private void ThrowExceptionIfUsersNotFound(ICollection<User> users)
         {
             if (users.Count == 0)
             {
@@ -58,7 +58,7 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
-            ThrowIfUsersNotFound(usersSet);
+            ThrowExceptionIfUsersNotFound(usersSet);
 
             foreach (User user in usersSet)
             {
@@ -100,7 +100,7 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
-            ThrowIfUsersNotFound(usersSet);
+            ThrowExceptionIfUsersNotFound(usersSet);
 
             foreach (User user in usersSet)
             {
@@ -130,7 +130,9 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<User> usersSet = _context.Users.Where(u => request.Users.Contains(u.Id)).ToHashSet();
 
-            ThrowIfUsersNotFound(usersSet);
+            ThrowExceptionIfUsersNotFound(usersSet);
+
+            usersSet.Add(admin);
 
             // TODO: add media upload
             Media? imageMedia = new Media();
@@ -144,7 +146,15 @@ namespace ASP_Chat.Service.Impl
             switch (chatTypeObj.Id)
             {
                 case 1:
-                    return CreateP2PChat(chat, usersSet.First());
+
+                    if (usersSet.Count != 2)
+                    {
+                        throw ServerExceptionFactory.InvalidP2PChatUsersCount();
+                    }
+
+                    ThrowExceptionIfP2PChatExists(usersSet);
+
+                    return CreateP2PChat(chat, usersSet);
                 case 2:
                     return CreateGroupChat(chat, usersSet, request, imageMedia);
                 case 3:
@@ -154,14 +164,22 @@ namespace ASP_Chat.Service.Impl
             throw new NotImplementedException();
         }
 
+        private void ThrowExceptionIfP2PChatExists(ICollection<User> usersSet)
+        {
+            if (null != _context.Chats.FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
+                                                        && c.Users.Contains(usersSet.First()) 
+                                                        && c.Users.Contains(usersSet.Last())))
+            {
+                throw ServerExceptionFactory.ChatAlreadyExists();
+            }
+        }
+
         private Chat CreateChannel(Chat chat, HashSet<User> users,
             ChatCreateRequest request, Media? image)
         {
             _logger.LogDebug("Creating channel with admin id: {AdminId}", chat.Admin.Id);
 
             chat.MakeChanelChat(request, image);
-
-            chat.AddUser(chat.Admin);
 
             foreach (User user in users)
             {
@@ -180,8 +198,6 @@ namespace ASP_Chat.Service.Impl
 
             chat.MakeGroupChat(request, image);
 
-            chat.AddUser(chat.Admin);
-
             foreach (User user in users)
             {
                 chat.AddUser(user);
@@ -192,12 +208,14 @@ namespace ASP_Chat.Service.Impl
             return chat;
         }
 
-        private Chat CreateP2PChat(Chat chat, User user)
+        private Chat CreateP2PChat(Chat chat, HashSet<User> users)
         {
             _logger.LogDebug("Creating p2p chat with admin id: {AdminId}", chat.Admin.Id);
 
-            chat.AddUser(chat.Admin);
-            chat.AddUser(user);
+            foreach (User user in users)
+            {
+                chat.AddUser(user);
+            }
 
             _context.Chats.Add(chat);
             _context.SaveChanges();

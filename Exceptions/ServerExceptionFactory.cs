@@ -86,6 +86,20 @@
                 StatusCodes.NotFound);
         }
 
+        public static ServerException ChatAlreadyExists()
+        {
+            return new ServerException("Chat already exists",
+                ExceptionCodes.ChatAlreadyExists,
+                StatusCodes.BadRequest);
+        }
+
+        public static ServerException InvalidP2PChatUsersCount()
+        {
+            return new ServerException("Invalid P2P chat users count",
+                ExceptionCodes.InvalidP2PChatUsersCount,
+                StatusCodes.BadRequest);
+        }
+
         public static ServerException ChatNotPublic()
         {
             return new ServerException("Chat is not public",
