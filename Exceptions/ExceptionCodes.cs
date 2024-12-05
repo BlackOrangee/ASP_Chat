@@ -8,6 +8,7 @@
         InvalidCredentials,
         InvalidToken,
         InvalidP2PChatUsersCount,
+        UniqueNameIsTaken,
         UserNotFound,
         UserNotAdmin,
         UserNotInChat,

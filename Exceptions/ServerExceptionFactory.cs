@@ -163,10 +163,10 @@
                 StatusCodes.Forbidden);
         }
 
-        public static ServerException UsernameTaken(string username)
+        public static ServerException UniqueNameIsTaken(string uniqueName)
         {
-            return new ServerException($"Username {username} is taken",
-                ExceptionCodes.UserAlreadyExists,
+            return new ServerException($"UniqueName {uniqueName} is taken",
+                ExceptionCodes.UniqueNameIsTaken,
                 StatusCodes.BadRequest);
         }
     }

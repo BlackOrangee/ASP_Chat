@@ -12,12 +12,12 @@ namespace ASP_Chat.Controllers.Request.ValidationAttributes
                 return ValidationResult.Success;
             }
 
-            if (value is string name && name.Length >= 4 && name.Length <= 10)
+            if (value is string name && name.Length >= 4 && name.Length <= 20)
             {
                 return ValidationResult.Success!;
             }
 
-            return new ValidationResult("Name must be between 4 and 10 characters long.");
+            return new ValidationResult("Name must be between 4 and 20 characters long.");
         }
     }
 }

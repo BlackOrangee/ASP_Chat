@@ -150,12 +150,16 @@ namespace ASP_Chat.Entity
             if (string.IsNullOrEmpty(request.Description)) 
             {
                 request.Description = "Channel description";
-            } 
+            }
+
+            if (image != null)
+            {
+                Image = image;
+            }
 
             Tag = request.Tag;
             Name = request.Name;
             Description = request.Description;
-            Image = image;
         }
 
         public void MakeGroupChat(ChatCreateRequest request, Media? image)
@@ -165,9 +169,13 @@ namespace ASP_Chat.Entity
                 request.Description = "Group description";
             }
 
+            if (image != null)
+            {
+                Image = image;
+            }
+
             Name = request.Name;
             Description = request.Description;
-            Image = image;
         }
 
         public void MakeLastUserAdmin()

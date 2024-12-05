@@ -43,6 +43,12 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
+        private bool IsTagTaken(string tag)
+        {
+            return _context.Chats.FirstOrDefault(c => c.Tag == tag) != null
+                || _context.Users.FirstOrDefault(u => u.Username == tag) != null;
+        }
+
         public string AddModeratorToChat(long userId, long chatId, ChatAddUsersRequest request)
         {
             _logger.LogDebug("Adding moderators to chat: {ChatId}", chatId);
@@ -140,7 +146,7 @@ namespace ASP_Chat.Service.Impl
             usersSet.Add(admin);
 
             // TODO: add media upload
-            Media? imageMedia = new Media();
+            Media? imageMedia = null;
 
             Chat chat = new Chat()
             {
@@ -171,7 +177,9 @@ namespace ASP_Chat.Service.Impl
 
         private void ThrowExceptionIfP2PChatExists(ICollection<User> usersSet)
         {
-            if (null != _context.Chats.FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
+            if (null != _context.Chats.Include(c => c.Type)
+                                      .Include(c => c.Users)
+                                      .FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
                                                         && c.Users.Contains(usersSet.First())
                                                         && c.Users.Contains(usersSet.Last())))
             {
@@ -291,8 +299,10 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Getting chats with user id: {UserId}", userId);
             User user = _userService.GetUserById(userId);
+            HashSet<Chat> userChats = _context.Chats.Include(c => c.Type)
+                                                    .Where(c => c.Users.Contains(user)).ToHashSet();
 
-            return user.Chats;
+            return userChats;
         }
 
         public Chat UpdateChatInfo(long userId, long chatId, ChatUpdateRequest request)
@@ -300,7 +310,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Updating chat with id: {ChatId}", chatId);
             User user = _userService.GetUserById(userId);
 
-            Chat? chat = GetChat(chatId);
+            Chat chat = GetChat(chatId);
 
             if (chat.IsChatP2P())
             {
@@ -310,6 +320,11 @@ namespace ASP_Chat.Service.Impl
             if (!chat.IsUserAdmin(user))
             {
                 throw ServerExceptionFactory.UserNotAdmin();
+            }
+
+            if (request.Tag != null && IsTagTaken(request.Tag))
+            {
+                throw ServerExceptionFactory.UniqueNameIsTaken(request.Tag);
             }
 
             chat.UpdateFieldsIfExists(request);
