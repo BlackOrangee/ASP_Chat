@@ -22,7 +22,7 @@ namespace ASP_Chat.Entity
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Media? Image { get; set; }
-        public ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = new HashSet<User>();
         public ICollection<Message>? Messages { get; set; } = new HashSet<Message>();
         public ICollection<User>? Moderators { get; set; } = new HashSet<User>();
 
