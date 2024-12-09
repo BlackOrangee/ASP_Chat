@@ -35,12 +35,18 @@ namespace ASP_Chat.Service.Impl
             return chat;
         }
 
-        private void ThrowExceptionIfUsersNotFound(ICollection<User> users)
+        private static void ThrowExceptionIfUsersNotFound(ICollection<User> users)
         {
             if (users.Count == 0)
             {
                 throw ServerExceptionFactory.UsersNotFound();
             }
+        }
+
+        private bool IsTagTaken(string tag)
+        {
+            return _context.Chats.FirstOrDefault(c => c.Tag == tag) != null
+                || _context.Users.FirstOrDefault(u => u.Username == tag) != null;
         }
 
         public string AddModeratorToChat(long userId, long chatId, ChatAddUsersRequest request)
@@ -140,7 +146,7 @@ namespace ASP_Chat.Service.Impl
             usersSet.Add(admin);
 
             // TODO: add media upload
-            Media? imageMedia = new Media();
+            Media? imageMedia = null;
 
             Chat chat = new Chat()
             {
@@ -171,9 +177,11 @@ namespace ASP_Chat.Service.Impl
 
         private void ThrowExceptionIfP2PChatExists(ICollection<User> usersSet)
         {
-            if (null != _context.Chats.FirstOrDefault(c => c.IsChatP2P()
-                                                        && c.IsUserInChat(usersSet.First())
-                                                        && c.IsUserInChat(usersSet.Last())))
+            if (null != _context.Chats.Include(c => c.Type)
+                                      .Include(c => c.Users)
+                                      .FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
+                                                        && c.Users.Contains(usersSet.First())
+                                                        && c.Users.Contains(usersSet.Last())))
             {
                 throw ServerExceptionFactory.ChatAlreadyExists();
             }
@@ -234,10 +242,10 @@ namespace ASP_Chat.Service.Impl
 
             Chat chat = GetChat(chatId);
 
-            //if (!chat.IsUserInChat(user))
-            //{
-            //    throw ServerExceptionFactory.UserNotInChat();
-            //}
+            if (!chat.IsUserInChat(user))
+            {
+                throw ServerExceptionFactory.UserNotInChat();
+            }
 
             return chat;
         }
@@ -249,18 +257,18 @@ namespace ASP_Chat.Service.Impl
 
             HashSet<Chat> userGroupAndChanels = _context.Chats.Where(
                     c => c.Type.Id != (long)ChatTypes.P2P
-                    && c.IsUserInChat(user)
+                    && c.Users.Contains(user)
                     && c.Name.Contains(name)
                 ).ToHashSet();
             
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.IsChatP2P()
-                    && c.IsUserInChat(user)
+                    c => c.Type.Id == (long)ChatTypes.P2P
+                    && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Name.Contains(name)
                 ).ToHashSet();
 
             HashSet<Chat> ChanelsToJoin = _context.Chats.Where(
-                    c => c.IsChatChannel()
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Name.Contains(name)
                 ).ToHashSet();
 
@@ -274,13 +282,13 @@ namespace ASP_Chat.Service.Impl
             User user = _userService.GetUserById(userId);
 
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
-                    c => c.IsChatP2P()
-                    && c.IsUserInChat(user)
+                    c => c.Type.Id == (long)ChatTypes.P2P
+                    && c.Users.Contains(user)
                     && c.Users.FirstOrDefault(u => u.Id != userId).Username.Contains(tag)
                 ).ToHashSet();
 
             HashSet<Chat> Chanels = _context.Chats.Where(
-                    c => c.IsChatChannel()
+                    c => c.Type.Id == (long)ChatTypes.Channel
                     && c.Tag.Contains(tag)
                 ).ToHashSet();
 
@@ -291,8 +299,10 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Getting chats with user id: {UserId}", userId);
             User user = _userService.GetUserById(userId);
+            HashSet<Chat> userChats = _context.Chats.Include(c => c.Type)
+                                                    .Where(c => c.Users.Contains(user)).ToHashSet();
 
-            return user.Chats;
+            return userChats;
         }
 
         public Chat UpdateChatInfo(long userId, long chatId, ChatUpdateRequest request)
@@ -300,7 +310,7 @@ namespace ASP_Chat.Service.Impl
             _logger.LogDebug("Updating chat with id: {ChatId}", chatId);
             User user = _userService.GetUserById(userId);
 
-            Chat? chat = GetChat(chatId);
+            Chat chat = GetChat(chatId);
 
             if (chat.IsChatP2P())
             {
@@ -310,6 +320,11 @@ namespace ASP_Chat.Service.Impl
             if (!chat.IsUserAdmin(user))
             {
                 throw ServerExceptionFactory.UserNotAdmin();
+            }
+
+            if (request.Tag != null && IsTagTaken(request.Tag))
+            {
+                throw ServerExceptionFactory.UniqueNameIsTaken(request.Tag);
             }
 
             chat.UpdateFieldsIfExists(request);

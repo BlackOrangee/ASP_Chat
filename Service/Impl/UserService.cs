@@ -79,7 +79,7 @@ namespace ASP_Chat.Service.Impl
             if (!string.IsNullOrWhiteSpace(request.Username)
                 && _context.Users.FirstOrDefault(u => u.Username == request.Username) != null)
             {
-                throw ServerExceptionFactory.UsernameTaken(request.Username);
+                throw ServerExceptionFactory.UniqueNameIsTaken(request.Username);
             }
         }
     }

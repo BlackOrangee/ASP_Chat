@@ -45,7 +45,7 @@ namespace ASP_Chat.Entity
             if (request.File != null)
             {
                 //TODO: file upload
-                Media = new HashSet<Media>();
+                Media = null;
             }
         }
 

@@ -12,13 +12,13 @@ namespace ASP_Chat.Controllers.Request.ValidationAttributes
                 return ValidationResult.Success;
             }
 
-            if (value is string username && username.Length >= 4 && username.Length <= 10 && !username.Contains(" "))
+            if (value is string username && username.Length >= 4 && username.Length <= 15 && !username.Contains(" "))
             {
                 return ValidationResult.Success!;
             }
 
             var displayName = validationContext.DisplayName;
-            return new ValidationResult($"{displayName} must be between 4 and 10 characters long. It must not contain spaces.");
+            return new ValidationResult($"{displayName} must be between 4 and 15 characters long. It must not contain spaces.");
         }
     }
 }
