@@ -9,7 +9,7 @@ namespace ASP_Chat.Controllers
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class UserController : Controller
+    public class UserController : ControllerBase
     {
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;

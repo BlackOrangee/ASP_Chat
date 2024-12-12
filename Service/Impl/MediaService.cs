@@ -2,6 +2,7 @@
 using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -9,7 +10,7 @@ namespace ASP_Chat.Service.Impl
     {
         private readonly ApplicationDBContext _context;
         private readonly ILogger<MediaService> _logger;
-        private readonly IKafkaService _kafkaProducerService;
+        private readonly IKafkaService _kafkaService;
 
         public MediaService(ApplicationDBContext context,
                             ILogger<MediaService> logger,
@@ -17,7 +18,7 @@ namespace ASP_Chat.Service.Impl
         {
             _context = context;
             _logger = logger;
-            _kafkaProducerService = kafkaProducerService;
+            _kafkaService = kafkaProducerService;
         }
 
         public Media UploadFile(IFormFile fileData, object holder)
@@ -39,7 +40,7 @@ namespace ASP_Chat.Service.Impl
             {
                 try
                 {
-                    await _kafkaProducerService.SendMessageAsync(new FileRequest()
+                    await _kafkaService.SendMessageAsync(new FileRequest()
                     {
                         Operation = "Save",
                         FileName = path,
@@ -75,14 +76,37 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
-        public string GetFileLink(Media media)
+        public string GetFileLink(long mediaId, long userId)
         {
-            _logger.LogDebug("Getting file link");
+            _logger.LogDebug("Getting file link with id: {MediaId}", mediaId);
+
+            Media? media = _context.Medias.Include(m => m.Users)
+                                          .Include(m => m.Chats)
+                                          .Include(m => m.Messages)
+                                          .FirstOrDefault(m => m.Id == mediaId);
+
+            if (media == null)
+            {
+                throw ServerExceptionFactory.MediaNotFound(mediaId);
+            }
+
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+
+            if (user == null)
+            {
+                throw ServerExceptionFactory.UserNotFound();
+            }
+
+            if (!IsUserCanSeeFile(media, user)) 
+            {
+                throw ServerExceptionFactory.NoPermissionToGetMediaLink();
+            }
+
             Task.Run(async () =>
             {
                 try
                 {
-                    await _kafkaProducerService.SendMessageAsync(new FileRequest()
+                    await _kafkaService.SendMessageAsync(new FileRequest()
                     {
                         Operation = "Get",
                         FileName = media.Url
@@ -94,9 +118,49 @@ namespace ASP_Chat.Service.Impl
                 }
             });
 
-            return _kafkaProducerService.WaitForResponseAsync(media.Url, "media-responses")
+            return _kafkaService.WaitForResponseAsync(media.Url, "media-responses")
                                         .GetAwaiter()
                                         .GetResult();
+        }
+
+        private bool IsUserCanSeeFile(Media media, User user)
+        {
+            if (media.Users != null && media.Users.Count > 0)
+            {
+                return true;
+            }
+
+            if (media.Chats != null && media.Chats.Count > 0)
+            {
+                foreach (Chat chat in media.Chats)
+                {
+                    Chat? loadedChat = _context.Chats.Include(c => c.Users)
+                                                     .Include(c => c.Type)
+                                                     .FirstOrDefault(c => c.Id == chat.Id);
+                    
+                    if ( loadedChat != null && ( loadedChat.IsChatPublic() || loadedChat.IsUserInChat(user) ) )
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (media.Messages != null && media.Messages.Count > 0)
+            {
+                foreach (Message message in media.Messages)
+                {
+                    Message? loadedMessage = _context.Messages.Include(m => m.User)
+                                                              .Include(m => m.Chat)
+                                                              .ThenInclude(c => c.Users)
+                                                              .FirstOrDefault(m => m.Id == message.Id);
+                    
+                    if (loadedMessage != null && loadedMessage.Chat.Users.Contains(user))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public string DeleteFile(Media media)
@@ -106,7 +170,7 @@ namespace ASP_Chat.Service.Impl
             {
                 try
                 {
-                    await _kafkaProducerService.SendMessageAsync(new FileRequest()
+                    await _kafkaService.SendMessageAsync(new FileRequest()
                     {
                         Operation = "Delete",
                         FileName = media.Url

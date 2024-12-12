@@ -25,8 +25,10 @@
         ChatCanNotHaveModerators,
         ChatCanNotBeUpdated,
         MessageNotFound,
+        MediaNotFound,
         NoPermissionToSendMessage,
         NoPermissionToEditMessage,
         NoPermissionToDeleteMessage,
+        NoPermissionToGetMediaLink,
     }
 }

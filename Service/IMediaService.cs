@@ -6,6 +6,6 @@ namespace ASP_Chat.Service
     {
         Media UploadFile(IFormFile fileData, object holder);
         string DeleteFile(Media media);
-        string GetFileLink(Media media);
+        string GetFileLink(long mediaId, long userId);
     }
 }

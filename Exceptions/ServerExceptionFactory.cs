@@ -177,6 +177,13 @@
                 StatusCodes.Forbidden);
         }
 
+        public static ServerException NoPermissionToGetMediaLink()
+        {
+            return new ServerException("No permission to get media link",
+                ExceptionCodes.NoPermissionToGetMediaLink,
+                StatusCodes.Forbidden);
+        }
+
         public static ServerException UniqueNameIsTaken(string uniqueName)
         {
             return new ServerException($"UniqueName {uniqueName} is taken",
@@ -189,6 +196,13 @@
             return new ServerException(message,
                 ExceptionCodes.InternalServerError,
                 StatusCodes.InternalServerError);
+        }
+
+        public static ServerException MediaNotFound(long mediaId)
+        {
+            return new ServerException("Media with id: " + mediaId + " not found",
+                ExceptionCodes.MediaNotFound,
+                StatusCodes.NotFound);
         }
     }
 }
