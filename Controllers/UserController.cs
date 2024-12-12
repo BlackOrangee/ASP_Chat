@@ -40,7 +40,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPut]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult UpdateUser([FromBody] UserUpdateRequest request,
+        public IActionResult UpdateUser([FromForm] UserUpdateRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);

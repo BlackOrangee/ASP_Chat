@@ -13,9 +13,28 @@ using System.Text;
 
 DotNetEnv.Env.Load();
 
+string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+string? bootstrapServers = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
+
+string? secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw ServerExceptionFactory.DBNotSet();
+}
+
+if (string.IsNullOrEmpty(bootstrapServers))
+{
+    throw ServerExceptionFactory.KafkaNotSet();
+}
+
+if (string.IsNullOrEmpty(secretKey))
+{
+    throw ServerExceptionFactory.SecretKeyNotSet();
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
@@ -31,18 +50,15 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterType<MessageService>().As<IMessageService>().SingleInstance();
     containerBuilder.RegisterType<JwtService>().As<IJwtService>().SingleInstance();
     containerBuilder.RegisterType<PasswordHasher<User>>().As<IPasswordHasher<User>>().InstancePerLifetimeScope();
+    containerBuilder.RegisterType<KafkaService>()
+                    .As<IKafkaService>()
+                    .WithParameter("bootstrapServers", bootstrapServers)
+                    .SingleInstance();
+    containerBuilder.RegisterType<MediaService>().As<IMediaService>().SingleInstance();
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-
-var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-
-if (string.IsNullOrEmpty(secretKey))
-{
-    throw ServerExceptionFactory.SecretKeyNotSet();
-}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -61,7 +77,6 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
-
 
 using (var scope = app.Services.CreateScope())
 {

@@ -14,6 +14,6 @@ namespace ASP_Chat.Controllers.Request
         public string? Text { get; set; }
 
         [RequiredIfMissing(nameof(Text))]
-        public ICollection<byte[]>? File { get; set; }
+        public ICollection<IFormFile>? File { get; set; }
     }
 }

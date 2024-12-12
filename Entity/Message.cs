@@ -35,17 +35,11 @@ namespace ASP_Chat.Entity
             IsEdited = true;
         }
 
-        public void AddTextOrFileIfExists(MessageSendRequest request)
+        public void AddTextIfExists(MessageSendRequest request)
         {
             if (request.Text != null)
             {
                 Text = request.Text;
-            }
-
-            if (request.File != null)
-            {
-                //TODO: file upload
-                Media = null;
             }
         }
 

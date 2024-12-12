@@ -25,7 +25,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult CreateChat([FromBody] ChatCreateRequest request, 
+        public IActionResult CreateChat([FromForm] ChatCreateRequest request, 
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Creating new chat");
@@ -74,7 +74,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult UpdateChat(long id, [FromBody] ChatUpdateRequest request,
+        public IActionResult UpdateChat(long id, [FromForm] ChatUpdateRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long chatId = id;

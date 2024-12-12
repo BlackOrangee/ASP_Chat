@@ -8,11 +8,15 @@ namespace ASP_Chat.Service.Impl
     {
         private readonly ApplicationDBContext _context;
         private readonly ILogger<UserService> _logger;
+        private readonly IMediaService _mediaService;
 
-        public UserService(ApplicationDBContext context, ILogger<UserService> logger)
+        public UserService(ApplicationDBContext context, 
+                           ILogger<UserService> logger, 
+                           IMediaService mediaService)
         {
             _context = context;
             _logger = logger;
+            _mediaService = mediaService;
         }
 
         public string DeleteUser(long id)
@@ -57,6 +61,11 @@ namespace ASP_Chat.Service.Impl
             ThrowExceptionIfUserNotExists(user);
 
             ThrowExceptionIfUsernameTaken(request);
+
+            if (request.Image != null)
+            {
+                user.Image = _mediaService.UploadFile(request.Image, user);
+            }
 
             user.UpdateFieldsIfExists(request);
 

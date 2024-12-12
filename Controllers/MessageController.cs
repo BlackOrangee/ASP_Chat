@@ -25,7 +25,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult SendMessage([FromBody] MessageSendRequest request,
+        public IActionResult SendMessage([FromForm] MessageSendRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
