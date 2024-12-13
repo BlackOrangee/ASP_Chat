@@ -204,5 +204,12 @@
                 ExceptionCodes.MediaNotFound,
                 StatusCodes.NotFound);
         }
+
+        public static ServerException RequestTimeout()
+        {
+            return new ServerException("Request timeout",
+                ExceptionCodes.InternalServerError,
+                StatusCodes.InternalServerError);
+        }
     }
 }

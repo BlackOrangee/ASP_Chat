@@ -39,7 +39,7 @@ namespace ASP_Chat.Service.Impl
                         Value = messageValue
                     });
 
-                _logger.LogDebug("Message sent to topic '{_topic}' with key '{fileRequest.Operation}' and value '{messageValue}'", 
+                _logger.LogDebug("Message sent to topic '{_topic}' with key '{fileRequest.Operation}' and value '{messageValue}'",
                                     _topic, fileRequest.Operation, messageValue);
             }
             catch (ProduceException<string, string> ex)
@@ -60,14 +60,18 @@ namespace ASP_Chat.Service.Impl
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
             consumer.Subscribe(responseTopic);
 
-            while (true)
+            var startTime = DateTime.Now;
+            while (DateTime.Now.Subtract(startTime).TotalSeconds < 60)
             {
                 var result = consumer.Consume();
                 if (result.Message.Key == key)
                 {
                     return result.Message.Value;
                 }
+                await Task.Delay(1000);
             }
+
+            throw ServerExceptionFactory.RequestTimeout();
         }
     }
 }

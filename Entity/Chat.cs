@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace ASP_Chat.Entity
 {
-    public class Chat
+    public class Chat : IEntityWithId
     {
         public long Id { get; set; }
         public long AdminId { get; set; }

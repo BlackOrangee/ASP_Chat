@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ASP_Chat.Entity
 {
-    public class User
+    public class User : IEntityWithId
     {
         public long Id { get; set; }
         public string Name { get; set; }

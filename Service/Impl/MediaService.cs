@@ -1,9 +1,8 @@
-﻿using ASP_Chat.Entity;
+﻿using System.Security.Cryptography;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
-using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -22,15 +21,15 @@ namespace ASP_Chat.Service.Impl
             _kafkaService = kafkaProducerService;
         }
 
-        public Media UploadFile(IFormFile fileData, object holder)
+        public Media UploadFile<T>(IFormFile fileData, T holder) where T : class, IEntityWithId
         {
             _logger.LogDebug("Uploading file");
 
             byte[] fileDataBytes = GetFileBytesAsync(fileData).GetAwaiter().GetResult();
 
-            string className = holder.GetType().Name;
-            var idProperty = holder.GetType().GetProperty("Id");
-            var idValue = idProperty != null ? idProperty.GetValue(holder)?.ToString() : "0";
+            string className = typeof(T).Name;
+            string idValue = holder.Id.ToString();
+
             string hash = GenerateHash(fileDataBytes);
             string fileExtension = Path.GetExtension(fileData.FileName);
             string uniqueFileName = $"{hash}{fileExtension}";
@@ -59,6 +58,7 @@ namespace ASP_Chat.Service.Impl
                 Url = path
             };
         }
+
         private async Task<byte[]> GetFileBytesAsync(IFormFile file)
         {
             using (var memoryStream = new MemoryStream())
@@ -97,7 +97,7 @@ namespace ASP_Chat.Service.Impl
                 throw ServerExceptionFactory.UserNotFound();
             }
 
-            if (!IsUserCanSeeFile(media, user)) 
+            if (!IsUserCanSeeFile(media, user))
             {
                 throw ServerExceptionFactory.NoPermissionToGetMediaLink();
             }
@@ -125,42 +125,20 @@ namespace ASP_Chat.Service.Impl
 
         private bool IsUserCanSeeFile(Media media, User user)
         {
-            if (media.Users != null && media.Users.Count > 0)
+            string[] mediaPathParts = media.Url.Split("/");
+            string className = mediaPathParts[0];
+            string id = mediaPathParts[1];
+
+            if (className.Equals("Chat"))
             {
-                return true;
+                Chat? chat = _context.Chats.Include(c => c.Type)
+                                           .Include(c => c.Users)
+                                           .FirstOrDefault(chat => chat.Id == long.Parse(id));
+
+                return chat != null && (chat.IsChatPublic() || chat.IsUserInChat(user));
             }
 
-            if (media.Chats != null && media.Chats.Count > 0)
-            {
-                foreach (Chat chat in media.Chats)
-                {
-                    Chat? loadedChat = _context.Chats.Include(c => c.Users)
-                                                     .Include(c => c.Type)
-                                                     .FirstOrDefault(c => c.Id == chat.Id);
-                    
-                    if ( loadedChat != null && ( loadedChat.IsChatPublic() || loadedChat.IsUserInChat(user) ) )
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            if (media.Messages != null && media.Messages.Count > 0)
-            {
-                foreach (Message message in media.Messages)
-                {
-                    Message? loadedMessage = _context.Messages.Include(m => m.User)
-                                                              .Include(m => m.Chat)
-                                                              .ThenInclude(c => c.Users)
-                                                              .FirstOrDefault(m => m.Id == message.Id);
-                    
-                    if (loadedMessage != null && loadedMessage.Chat.Users.Contains(user))
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return true;
         }
 
         public string DeleteFile(Media media)
