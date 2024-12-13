@@ -11,5 +11,7 @@ namespace ASP_Chat.Controllers.Request
         public string? Username { get; set; }
 
         public string? Description { get; set; }
+
+        public IFormFile? Image { get; set; }
     }
 }

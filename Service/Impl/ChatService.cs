@@ -3,7 +3,6 @@ using ASP_Chat.Exceptions;
 using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -12,12 +11,17 @@ namespace ASP_Chat.Service.Impl
         private readonly ApplicationDBContext _context;
         private readonly ILogger<ChatService> _logger;
         private readonly IUserService _userService;
+        private readonly IMediaService _mediaService;
 
-        public ChatService(ApplicationDBContext context, ILogger<ChatService> logger, IUserService userService)
+        public ChatService(ApplicationDBContext context, 
+                           ILogger<ChatService> logger, 
+                           IUserService userService, 
+                           IMediaService mediaService)
         {
             _context = context;
             _logger = logger;
             _userService = userService;
+            _mediaService = mediaService;
         }
 
         private Chat GetChat(long id)
@@ -145,9 +149,6 @@ namespace ASP_Chat.Service.Impl
 
             usersSet.Add(admin);
 
-            // TODO: add media upload
-            Media? imageMedia = null;
-
             Chat chat = new Chat()
             {
                 Admin = admin,
@@ -167,9 +168,9 @@ namespace ASP_Chat.Service.Impl
 
                     return CreateP2PChat(chat, usersSet);
                 case 2:
-                    return CreateGroupChat(chat, usersSet, request, imageMedia);
+                    return CreateGroupChat(chat, usersSet, request);
                 case 3:
-                    return CreateChannel(chat, usersSet, request, imageMedia);
+                    return CreateChannel(chat, usersSet, request);
             }
 
             throw new NotImplementedException();
@@ -188,11 +189,11 @@ namespace ASP_Chat.Service.Impl
         }
 
         private Chat CreateChannel(Chat chat, HashSet<User> users,
-            ChatCreateRequest request, Media? image)
+            ChatCreateRequest request)
         {
             _logger.LogDebug("Creating channel with admin id: {AdminId}", chat.Admin.Id);
 
-            chat.MakeChanelChat(request, image);
+            chat.MakeChanelChat(request);
 
             foreach (User user in users)
             {
@@ -201,15 +202,23 @@ namespace ASP_Chat.Service.Impl
 
             _context.Chats.Add(chat);
             _context.SaveChanges();
+
+            if (request.Image != null)
+            {
+                chat.Image = _mediaService.UploadFile(request.Image, chat);
+            }
+
+            _context.SaveChanges();
+
             return chat;
         }
 
         private Chat CreateGroupChat(Chat chat, HashSet<User> users,
-            ChatCreateRequest request, Media? image)
+            ChatCreateRequest request)
         {
             _logger.LogDebug("Creating group with admin id: {AdminId}", chat.Admin.Id);
 
-            chat.MakeGroupChat(request, image);
+            chat.MakeGroupChat(request);
 
             foreach (User user in users)
             {
@@ -218,6 +227,14 @@ namespace ASP_Chat.Service.Impl
 
             _context.Chats.Add(chat);
             _context.SaveChanges();
+
+            if (request.Image != null)
+            {
+                chat.Image = _mediaService.UploadFile(request.Image, chat);
+            }
+
+            _context.SaveChanges();
+
             return chat;
         }
 
@@ -329,10 +346,14 @@ namespace ASP_Chat.Service.Impl
 
             chat.UpdateFieldsIfExists(request);
 
-            //if (image != null)
-            //{
-            //    chat.Image = image;
-            //}
+            if (request.Image != null)
+            {
+                if (chat.Image != null)
+                {
+                    _mediaService.DeleteFile(chat.Image);
+                }
+                chat.Image = _mediaService.UploadFile(request.Image, chat);
+            }
 
             _context.Chats.Update(chat);
             _context.SaveChanges();
@@ -397,11 +418,16 @@ namespace ASP_Chat.Service.Impl
                 chat.RemoveUser(user);
                 if (chat.IsChatEmpty())
                 {
+                    if (chat.Image != null)
+                    {
+                        _mediaService.DeleteFile(chat.Image);
+                    }
                     _context.Chats.Remove(chat);
                 }
                 else
                 {
                     chat.MakeLastUserAdmin();
+                    _context.Chats.Update(chat);
                 }
             }
             else
@@ -409,6 +435,10 @@ namespace ASP_Chat.Service.Impl
                 if (chat.IsChatWithLastUser())
                 {
                     chat.RemoveUser(user);
+                    if (chat.Image != null)
+                    {
+                        _mediaService.DeleteFile(chat.Image);
+                    }
                     _context.Chats.Remove(chat);
                 }
                 else if (chat.IsUserAdmin(user))
@@ -416,9 +446,9 @@ namespace ASP_Chat.Service.Impl
                     throw ServerExceptionFactory.UserCanNotLeaveChatAsAdmin();
                 }
                 chat.RemoveUser(user);
+                _context.Chats.Update(chat);
             }
 
-            _context.Chats.Update(chat);
             _context.SaveChanges();
 
             return "Left successfully";

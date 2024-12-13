@@ -1,9 +1,11 @@
-﻿namespace ASP_Chat.Service
+﻿using ASP_Chat.Entity;
+
+namespace ASP_Chat.Service
 {
     public interface IMediaService
     {
-        Task<string> UploadFile(IFormFile file);
-        Task<bool> DeleteFile(string fileName);
-        Task<string> GetFile(string fileName);
+        Media UploadFile<T>(IFormFile fileData, T holder) where T : class, IEntityWithId;
+        string DeleteFile(Media media);
+        string GetFileLink(long mediaId, long userId);
     }
 }

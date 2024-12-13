@@ -1,7 +1,7 @@
 ﻿using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
-using ASP_Chat.Enums;
 using ASP_Chat.Controllers.Request;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -11,14 +11,19 @@ namespace ASP_Chat.Service.Impl
         private readonly ILogger<MessageService> _logger;
         private readonly IUserService _userService;
         private readonly IChatService _chatService;
+        private readonly IMediaService _mediaService;
 
-        public MessageService(ApplicationDBContext context, ILogger<MessageService> logger, 
-            IUserService userService, IChatService chatService)
+        public MessageService(ApplicationDBContext context, 
+                              ILogger<MessageService> logger,
+                              IUserService userService,
+                              IChatService chatService,
+                              IMediaService mediaService)
         {
             _context = context;
             _logger = logger;
             _userService = userService;
             _chatService = chatService;
+            _mediaService = mediaService;
         }
 
         public string DeleteMessage(long userId, long messageId)
@@ -30,6 +35,13 @@ namespace ASP_Chat.Service.Impl
             if (!message.IsUserHavePermissionToModifyMessage(user))
             {
                 throw ServerExceptionFactory.NoPermissionToDeleteMessage();
+            }
+
+            if (message.Media != null)
+            {
+                foreach (Media m in message.Media){
+                    _mediaService.DeleteFile(m);
+                }
             }
             
             _context.Messages.Remove(message);
@@ -72,10 +84,19 @@ namespace ASP_Chat.Service.Impl
             { 
                 User = user,
                 Chat = chat,
-                Date = DateTime.Now
+                Date = DateTime.Now,
+                Media = new HashSet<Media>()
             };
 
-            message.AddTextOrFileIfExists(request);
+            if (request.File != null)
+            {
+                foreach (IFormFile file in request.File)
+                {
+                    message.Media.Add(_mediaService.UploadFile(file, chat));
+                }
+            }
+
+            message.AddTextIfExists(request);
 
             if (request.ReplyMessageId != null)
             {
@@ -93,7 +114,10 @@ namespace ASP_Chat.Service.Impl
         public Message GetMessage(long userId, long messageId)
         {
             _logger.LogDebug("Getting message with id: {MessageId}", messageId);
-            Message? message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
+            Message? message = _context.Messages.Include(m => m.User)
+                                                .Include(m => m.Media)
+                                                .Include(m => m.Chat)
+                                                .FirstOrDefault(m => m.Id == messageId);
 
             if (message == null)
             {

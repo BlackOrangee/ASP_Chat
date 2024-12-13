@@ -9,7 +9,7 @@ namespace ASP_Chat.Controllers
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class UserController : Controller
+    public class UserController : ControllerBase
     {
         private readonly ILogger<UserController> _logger;
         private readonly IUserService _userService;
@@ -40,7 +40,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPut]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult UpdateUser([FromBody] UserUpdateRequest request,
+        public IActionResult UpdateUser([FromForm] UserUpdateRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);

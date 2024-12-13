@@ -1,17 +1,27 @@
-﻿using ASP_Chat.Controllers.Request;
+﻿using System.Text.Json.Serialization;
+using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Entity
 {
     public class Message
     {
         public long Id { get; set; }
+
         public User User { get; set; }
+
+        [JsonIgnore]
         public Chat Chat { get; set; }
+
         public Message? ReplyMessage { get; set; }
+
         public DateTime Date { get; set; }
+
         public string? Text { get; set; }
+
         public bool IsEdited { get; set; } = false;
+
         public bool IsReaded { get; set; } = false;
+
         public ICollection<Media>? Media { get; set; } = new HashSet<Media>();
 
         public bool IsUserSender(User user)
@@ -35,17 +45,11 @@ namespace ASP_Chat.Entity
             IsEdited = true;
         }
 
-        public void AddTextOrFileIfExists(MessageSendRequest request)
+        public void AddTextIfExists(MessageSendRequest request)
         {
             if (request.Text != null)
             {
                 Text = request.Text;
-            }
-
-            if (request.File != null)
-            {
-                //TODO: file upload
-                Media = null;
             }
         }
 

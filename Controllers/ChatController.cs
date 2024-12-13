@@ -1,6 +1,5 @@
 ﻿using ASP_Chat.Controllers.Request;
 using ASP_Chat.Controllers.Response;
-using ASP_Chat.Entity;
 using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace ASP_Chat.Controllers
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class ChatController : Controller
+    public class ChatController : ControllerBase
     {
         private readonly ILogger<ChatController> _logger;
         private readonly IChatService _chatService;
@@ -25,7 +24,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult CreateChat([FromBody] ChatCreateRequest request, 
+        public IActionResult CreateChat([FromForm] ChatCreateRequest request, 
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Creating new chat");
@@ -74,7 +73,7 @@ namespace ASP_Chat.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult UpdateChat(long id, [FromBody] ChatUpdateRequest request,
+        public IActionResult UpdateChat(long id, [FromForm] ChatUpdateRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long chatId = id;

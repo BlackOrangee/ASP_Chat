@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace ASP_Chat.Entity
 {
-    public class Chat
+    public class Chat : IEntityWithId
     {
         public long Id { get; set; }
         public long AdminId { get; set; }
@@ -145,16 +145,11 @@ namespace ASP_Chat.Entity
             Users.Remove(user);
         }
 
-        public void MakeChanelChat(ChatCreateRequest request, Media? image)
+        public void MakeChanelChat(ChatCreateRequest request)
         {
             if (string.IsNullOrEmpty(request.Description)) 
             {
                 request.Description = "Channel description";
-            }
-
-            if (image != null)
-            {
-                Image = image;
             }
 
             Tag = request.Tag;
@@ -162,16 +157,11 @@ namespace ASP_Chat.Entity
             Description = request.Description;
         }
 
-        public void MakeGroupChat(ChatCreateRequest request, Media? image)
+        public void MakeGroupChat(ChatCreateRequest request)
         {
             if (string.IsNullOrEmpty(request.Description))
             {
                 request.Description = "Group description";
-            }
-
-            if (image != null)
-            {
-                Image = image;
             }
 
             Name = request.Name;

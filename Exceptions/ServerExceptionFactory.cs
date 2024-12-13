@@ -9,6 +9,20 @@
                 StatusCodes.InternalServerError);
         }
 
+        public static ServerException KafkaNotSet()
+        {
+            return new ServerException("Kafka is not set",
+                ExceptionCodes.SecretKeyNotSet,
+                StatusCodes.InternalServerError);
+        }
+
+        public static ServerException DBNotSet()
+        {
+            return new ServerException("DB is not set",
+                ExceptionCodes.SecretKeyNotSet,
+                StatusCodes.InternalServerError);
+        }
+
         public static ServerException InvalidCredentials()
         {
             return new ServerException("Invalid credentials",
@@ -163,11 +177,39 @@
                 StatusCodes.Forbidden);
         }
 
+        public static ServerException NoPermissionToGetMediaLink()
+        {
+            return new ServerException("No permission to get media link",
+                ExceptionCodes.NoPermissionToGetMediaLink,
+                StatusCodes.Forbidden);
+        }
+
         public static ServerException UniqueNameIsTaken(string uniqueName)
         {
             return new ServerException($"UniqueName {uniqueName} is taken",
                 ExceptionCodes.UniqueNameIsTaken,
                 StatusCodes.BadRequest);
+        }
+
+        public static ServerException KafkaException(string message)
+        {
+            return new ServerException(message,
+                ExceptionCodes.InternalServerError,
+                StatusCodes.InternalServerError);
+        }
+
+        public static ServerException MediaNotFound(long mediaId)
+        {
+            return new ServerException("Media with id: " + mediaId + " not found",
+                ExceptionCodes.MediaNotFound,
+                StatusCodes.NotFound);
+        }
+
+        public static ServerException RequestTimeout()
+        {
+            return new ServerException("Request timeout",
+                ExceptionCodes.InternalServerError,
+                StatusCodes.InternalServerError);
         }
     }
 }
