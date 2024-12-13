@@ -3,6 +3,7 @@ using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -84,7 +85,6 @@ namespace ASP_Chat.Service.Impl
                                           .Include(m => m.Chats)
                                           .Include(m => m.Messages)
                                           .FirstOrDefault(m => m.Id == mediaId);
-
             if (media == null)
             {
                 throw ServerExceptionFactory.MediaNotFound(mediaId);

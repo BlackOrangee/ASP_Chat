@@ -27,7 +27,7 @@ namespace ASP_Chat.Controllers
         {
             _logger.LogInformation("Getting media with id: {Id}", id);
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _mediaService.GetFileLink(userId, id)));
+            return Ok(new ApiResponse(data: _mediaService.GetFileLink(id, userId)));
         }
     }
 }

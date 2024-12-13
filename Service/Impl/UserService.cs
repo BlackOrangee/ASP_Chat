@@ -1,6 +1,7 @@
 ﻿using ASP_Chat.Controllers.Request;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -34,7 +35,8 @@ namespace ASP_Chat.Service.Impl
         public User GetUserById(long id)
         {
             _logger.LogDebug("Getting user with id: {Id}", id);
-            User? user = _context.Users.FirstOrDefault(u => u.Id == id);
+            User? user = _context.Users.Include(u => u.Image)
+                                       .FirstOrDefault(u => u.Id == id);
 
             ThrowExceptionIfUserNotExists(user);
 
@@ -64,6 +66,10 @@ namespace ASP_Chat.Service.Impl
 
             if (request.Image != null)
             {
+                if (user.Image != null)
+                {
+                    _mediaService.DeleteFile(user.Image);
+                }
                 user.Image = _mediaService.UploadFile(request.Image, user);
             }
 
