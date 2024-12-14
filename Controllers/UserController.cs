@@ -15,7 +15,9 @@ namespace ASP_Chat.Controllers
         private readonly IUserService _userService;
         private readonly IJwtService _jwtService;
 
-        public UserController(ILogger<UserController> logger, IUserService userService, IJwtService jwtService)
+        public UserController(ILogger<UserController> logger,
+                              IUserService userService,
+                              IJwtService jwtService)
         {
             _logger = logger;
             _userService = userService;
@@ -27,7 +29,7 @@ namespace ASP_Chat.Controllers
         public IActionResult GetUserById(long id)
         {
             _logger.LogInformation("Getting user with id: {Id}", id);
-            return Ok( new ApiResponse(data: _userService.GetUserById(id)));
+            return Ok(new ApiResponse(data: _userService.GetUserById(id)));
         }
 
         [HttpGet]
@@ -41,7 +43,7 @@ namespace ASP_Chat.Controllers
         [HttpPut]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult UpdateUser([FromForm] UserUpdateRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                        [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("Updating user with id: {Id}", userId);

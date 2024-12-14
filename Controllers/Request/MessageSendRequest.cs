@@ -1,5 +1,4 @@
-﻿using ASP_Chat.Controllers.Request.ValidationAttributes.RequiredAtributes;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ASP_Chat.Controllers.Request
 {
@@ -10,10 +9,10 @@ namespace ASP_Chat.Controllers.Request
 
         public long? ReplyMessageId { get; set; }
 
-        [RequiredIfMissing(nameof(File))]
+        //[RequiredIfMissing(nameof(File))]
         public string? Text { get; set; }
 
-        [RequiredIfMissing(nameof(Text))]
-        public ICollection<IFormFile>? File { get; set; }
+        //[RequiredIfMissing(nameof(Text))]
+        public IFormFile? File { get; set; }
     }
 }

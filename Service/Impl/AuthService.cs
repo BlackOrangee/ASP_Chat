@@ -13,8 +13,11 @@ namespace ASP_Chat.Service.Impl
         private readonly IUserService _userService;
         private readonly IJwtService _jwtService;
 
-        public AuthService(ApplicationDBContext context, ILogger<AuthService> logger, IPasswordHasher<User> passwordHasher,
-            IUserService userService, IJwtService jwtService)
+        public AuthService(ApplicationDBContext context,
+                           ILogger<AuthService> logger,
+                           IPasswordHasher<User> passwordHasher,
+                           IUserService userService,
+                           IJwtService jwtService)
         {
             _context = context;
             _logger = logger;

@@ -31,12 +31,14 @@ namespace ASP_Chat.Entity
 
         public bool IsUserHavePermissionToModifyMessage(User user)
         {
-            if ((Chat.IsChatP2P() && !IsUserSender(user)) || !Chat.IsUserModerator(user) || !Chat.IsUserAdmin(user))
+            if ((Chat.IsChatP2P() && IsUserSender(user))
+                || Chat.IsUserModerator(user)
+                || Chat.IsUserAdmin(user))
             {
-                return false;
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         public void Edit(string? text)

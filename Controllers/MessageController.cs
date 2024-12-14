@@ -15,8 +15,9 @@ namespace ASP_Chat.Controllers
         private readonly IMessageService _messageService;
         private readonly IJwtService _jwtService;
 
-        public MessageController(ILogger<MessageController> logger, 
-            IMessageService messageService, IJwtService jwtService)
+        public MessageController(ILogger<MessageController> logger,
+                                 IMessageService messageService,
+                                 IJwtService jwtService)
         {
             _logger = logger;
             _messageService = messageService;
@@ -26,7 +27,7 @@ namespace ASP_Chat.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult SendMessage([FromForm] MessageSendRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                         [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("User with {Id} send message", userId);
@@ -36,7 +37,7 @@ namespace ASP_Chat.Controllers
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult EditMessage(long id, [FromBody] MessageEditRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                         [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long messageId = id;
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
@@ -65,7 +66,7 @@ namespace ASP_Chat.Controllers
         [HttpGet("chat/{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult GetMessagesByChatId(long id, [FromQuery] long? lastMessageId,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                                 [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("User with {Id} get messages by chat id: {ChatId}", userId, id);

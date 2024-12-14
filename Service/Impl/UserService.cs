@@ -11,8 +11,8 @@ namespace ASP_Chat.Service.Impl
         private readonly ILogger<UserService> _logger;
         private readonly IMediaService _mediaService;
 
-        public UserService(ApplicationDBContext context, 
-                           ILogger<UserService> logger, 
+        public UserService(ApplicationDBContext context,
+                           ILogger<UserService> logger,
                            IMediaService mediaService)
         {
             _context = context;

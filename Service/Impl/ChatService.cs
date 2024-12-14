@@ -1,7 +1,7 @@
-﻿using ASP_Chat.Entity;
-using ASP_Chat.Exceptions;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 using ASP_Chat.Enums;
-using ASP_Chat.Controllers.Request;
+using ASP_Chat.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
@@ -13,9 +13,9 @@ namespace ASP_Chat.Service.Impl
         private readonly IUserService _userService;
         private readonly IMediaService _mediaService;
 
-        public ChatService(ApplicationDBContext context, 
-                           ILogger<ChatService> logger, 
-                           IUserService userService, 
+        public ChatService(ApplicationDBContext context,
+                           ILogger<ChatService> logger,
+                           IUserService userService,
                            IMediaService mediaService)
         {
             _context = context;
@@ -277,7 +277,7 @@ namespace ASP_Chat.Service.Impl
                     && c.Users.Contains(user)
                     && c.Name.Contains(name)
                 ).ToHashSet();
-            
+
             HashSet<Chat> userPersonalChats = _context.Chats.Where(
                     c => c.Type.Id == (long)ChatTypes.P2P
                     && c.Users.Contains(user)
@@ -373,7 +373,7 @@ namespace ASP_Chat.Service.Impl
             {
                 return GetChatsByTag(userId, tag);
             }
-                
+
             return GetChatsByUser(userId);
         }
 

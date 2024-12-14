@@ -1,3 +1,4 @@
+using System.Text;
 using ASP_Chat;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
@@ -9,7 +10,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 DotNetEnv.Env.Load();
 

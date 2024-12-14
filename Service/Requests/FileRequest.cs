@@ -1,6 +1,4 @@
-﻿using ASP_Chat.Enums;
-
-namespace ASP_Chat.Service.Requests
+﻿namespace ASP_Chat.Service.Requests
 {
     public class FileRequest
     {

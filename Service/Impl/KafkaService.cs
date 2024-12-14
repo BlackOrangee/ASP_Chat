@@ -1,7 +1,7 @@
-﻿using ASP_Chat.Exceptions;
+﻿using System.Text.Json;
+using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
 using Confluent.Kafka;
-using System.Text.Json;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -39,7 +39,7 @@ namespace ASP_Chat.Service.Impl
                         Value = messageValue
                     });
 
-                _logger.LogDebug("Message sent to topic '{_topic}' with key '{fileRequest.Operation}' and value '{messageValue}'",
+                _logger.LogDebug("Message sent to topic '{_topic}' with key '{Operation}' and value '{MessageValue}'",
                                     _topic, fileRequest.Operation, messageValue);
             }
             catch (ProduceException<string, string> ex)

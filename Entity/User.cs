@@ -1,5 +1,5 @@
-﻿using ASP_Chat.Controllers.Request;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using ASP_Chat.Controllers.Request;
 
 namespace ASP_Chat.Entity
 {

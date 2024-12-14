@@ -15,7 +15,9 @@ namespace ASP_Chat.Controllers
         private readonly IChatService _chatService;
         private readonly IJwtService _jwtService;
 
-        public ChatController(ILogger<ChatController> logger, IChatService chatService, IJwtService jwtService)
+        public ChatController(ILogger<ChatController> logger,
+                              IChatService chatService,
+                              IJwtService jwtService)
         {
             _logger = logger;
             _chatService = chatService;
@@ -24,8 +26,8 @@ namespace ASP_Chat.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult CreateChat([FromForm] ChatCreateRequest request, 
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+        public IActionResult CreateChat([FromForm] ChatCreateRequest request,
+                                        [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Creating new chat");
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
@@ -38,23 +40,23 @@ namespace ASP_Chat.Controllers
         {
             _logger.LogInformation("Getting chat with id: {Id}", id);
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok( new ApiResponse(data: _chatService.GetChatById(userId, id)));
+            return Ok(new ApiResponse(data: _chatService.GetChatById(userId, id)));
         }
 
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult GetChats([FromQuery] string? name, [FromQuery] string? tag,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                      [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Getting all chats");
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok( new ApiResponse(data: _chatService.GetChats(userId, name, tag)));
+            return Ok(new ApiResponse(data: _chatService.GetChats(userId, name, tag)));
         }
 
         [HttpPost("{id}/add/moderators")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult AddModerator(long id, [FromBody] ChatAddUsersRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                          [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long chatId = id;
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
@@ -64,7 +66,7 @@ namespace ASP_Chat.Controllers
         [HttpPost("{id}/add/users")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult AddUsers(long id, [FromBody] ChatAddUsersRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                      [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long chatId = id;
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
@@ -74,7 +76,7 @@ namespace ASP_Chat.Controllers
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
         public IActionResult UpdateChat(long id, [FromForm] ChatUpdateRequest request,
-                                            [FromHeader(Name = "Authorization")] string authorizationHeader)
+                                        [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long chatId = id;
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);

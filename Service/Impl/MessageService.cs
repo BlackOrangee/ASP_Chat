@@ -1,6 +1,6 @@
-﻿using ASP_Chat.Entity;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
-using ASP_Chat.Controllers.Request;
 using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
@@ -13,7 +13,7 @@ namespace ASP_Chat.Service.Impl
         private readonly IChatService _chatService;
         private readonly IMediaService _mediaService;
 
-        public MessageService(ApplicationDBContext context, 
+        public MessageService(ApplicationDBContext context,
                               ILogger<MessageService> logger,
                               IUserService userService,
                               IChatService chatService,
@@ -39,11 +39,12 @@ namespace ASP_Chat.Service.Impl
 
             if (message.Media != null)
             {
-                foreach (Media m in message.Media){
+                foreach (Media m in message.Media)
+                {
                     _mediaService.DeleteFile(m);
                 }
             }
-            
+
             _context.Messages.Remove(message);
             _context.SaveChanges();
 
@@ -80,8 +81,8 @@ namespace ASP_Chat.Service.Impl
                 throw ServerExceptionFactory.NoPermissionToSendMessage();
             }
 
-            Message message = new Message() 
-            { 
+            Message message = new Message()
+            {
                 User = user,
                 Chat = chat,
                 Date = DateTime.Now,
@@ -90,10 +91,8 @@ namespace ASP_Chat.Service.Impl
 
             if (request.File != null)
             {
-                foreach (IFormFile file in request.File)
-                {
-                    message.Media.Add(_mediaService.UploadFile(file, chat));
-                }
+                Media media = _mediaService.UploadFile(request.File, chat);
+                message.Media.Add(media);
             }
 
             message.AddTextIfExists(request);
@@ -117,6 +116,7 @@ namespace ASP_Chat.Service.Impl
             Message? message = _context.Messages.Include(m => m.User)
                                                 .Include(m => m.Media)
                                                 .Include(m => m.Chat)
+                                                .ThenInclude(c => c.Type)
                                                 .FirstOrDefault(m => m.Id == messageId);
 
             if (message == null)
@@ -142,10 +142,13 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Setting message with id: {MessageId} as readed", messageId);
             Message message = GetMessage(userId, messageId);
-            message.SetReaded();
 
-            _context.Messages.Update(message);
-            _context.SaveChanges();
+            if (message.User.Id != userId)
+            {
+                message.SetReaded();
+                _context.Messages.Update(message);
+                _context.SaveChanges();
+            }
         }
     }
 }

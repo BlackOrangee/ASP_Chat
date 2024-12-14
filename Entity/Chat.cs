@@ -1,6 +1,6 @@
-﻿using ASP_Chat.Enums;
+﻿using System.Text.Json.Serialization;
 using ASP_Chat.Controllers.Request;
-using System.Text.Json.Serialization;
+using ASP_Chat.Enums;
 
 namespace ASP_Chat.Entity
 {
@@ -46,16 +46,16 @@ namespace ASP_Chat.Entity
             return Users.Count == 1;
         }
 
-        public bool IsUserAdmin(User user) 
-        { 
+        public bool IsUserAdmin(User user)
+        {
             return user.Id == Admin.Id;
         }
 
         public bool IsUserModerator(User user)
         {
-            if (Moderators == null) 
-            { 
-                return false; 
+            if (Moderators == null)
+            {
+                return false;
             }
 
             foreach (User u in Moderators)
@@ -147,7 +147,7 @@ namespace ASP_Chat.Entity
 
         public void MakeChanelChat(ChatCreateRequest request)
         {
-            if (string.IsNullOrEmpty(request.Description)) 
+            if (string.IsNullOrEmpty(request.Description))
             {
                 request.Description = "Channel description";
             }
@@ -187,7 +187,7 @@ namespace ASP_Chat.Entity
             {
                 return Messages.Where(m => m.Id > lastMessageId).ToHashSet();
             }
-                
+
             return Messages.ToHashSet();
         }
     }

@@ -32,6 +32,5 @@ namespace ASP_Chat.Controllers.Response
             ErrorCode = errorCode;
             Errors = errors;
         }
-
     }
 }

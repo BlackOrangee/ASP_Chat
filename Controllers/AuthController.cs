@@ -1,10 +1,8 @@
-﻿using ASP_Chat.Service;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
+using ASP_Chat.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ASP_Chat.Controllers.Response;
-using ASP_Chat.Controllers.Request;
-
-
 
 namespace ASP_Chat.Controllers
 {
@@ -16,7 +14,9 @@ namespace ASP_Chat.Controllers
         private readonly IAuthService _authService;
         private readonly IJwtService _jwtService;
 
-        public AuthController(ILogger<AuthController> logger, IAuthService authService, IJwtService jwtService)
+        public AuthController(ILogger<AuthController> logger,
+                              IAuthService authService,
+                              IJwtService jwtService)
         {
             _logger = logger;
             _authService = authService;
@@ -42,13 +42,13 @@ namespace ASP_Chat.Controllers
         [Authorize]
         [HttpPost("change-password")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult ChangePassword([FromBody] AuthChangePasswordRequest request, 
+        public IActionResult ChangePassword([FromBody] AuthChangePasswordRequest request,
                                             [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
             _logger.LogInformation("UserId: {Id}. Try to change password.", userId);
 
-            return Ok(new ApiResponse( message: _authService.ChangePassword(userId, request)));
+            return Ok(new ApiResponse(message: _authService.ChangePassword(userId, request)));
         }
     }
 }

@@ -12,7 +12,7 @@ namespace ASP_Chat.Controllers
         private readonly IMediaService _mediaService;
         private readonly IJwtService _jwtService;
 
-        public MediaController(ILogger<MediaController> logger, 
+        public MediaController(ILogger<MediaController> logger,
                                IMediaService mediaService,
                                IJwtService jwtService)
         {
