@@ -23,11 +23,12 @@ namespace ASP_Chat.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult GetMediaLinkById(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
+        public async Task<IActionResult> GetMediaLinkByIdAsync(long id, [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Getting media with id: {Id}", id);
             long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
-            return Ok(new ApiResponse(data: _mediaService.GetFileLink(id, userId)));
+            var mediaLink = await _mediaService.GetFileLink(id, userId, 604800);
+            return Ok(new ApiResponse(data: mediaLink));
         }
     }
 }

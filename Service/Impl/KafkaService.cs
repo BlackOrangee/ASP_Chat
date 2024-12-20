@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using ASP_Chat.Exceptions;
+﻿using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
 using Confluent.Kafka;
+using System.Text.Json;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -10,28 +10,39 @@ namespace ASP_Chat.Service.Impl
         private readonly ILogger<KafkaService> _logger;
         private readonly string _bootstrapServers;
         private readonly string _topic;
+        private readonly IConsumer<string, string> _consumer;
+        private readonly IProducer<string, string> _producer;
 
         public KafkaService(ILogger<KafkaService> logger, string bootstrapServers)
         {
             _logger = logger;
             _bootstrapServers = bootstrapServers;
             _topic = "media-requests";
-        }
 
-        public async Task SendMessageAsync(FileRequest fileRequest)
-        {
-            var config = new ProducerConfig
+            ConsumerConfig consumerConfig = new ConsumerConfig
+            {
+                BootstrapServers = _bootstrapServers,
+                GroupId = "response-consumer-group",
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            };
+
+            _consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
+
+            ProducerConfig producerConfig = new ProducerConfig
             {
                 BootstrapServers = _bootstrapServers
             };
 
-            using var producer = new ProducerBuilder<string, string>(config).Build();
+            _producer = new ProducerBuilder<string, string>(producerConfig).Build();
+        }
 
+        public async Task SendMessageAsync(FileRequest fileRequest)
+        {
             var messageValue = JsonSerializer.Serialize(fileRequest);
 
             try
             {
-                var deliveryResult = await producer.ProduceAsync(
+                var deliveryResult = await _producer.ProduceAsync(
                     _topic,
                     new Message<string, string>
                     {
@@ -50,25 +61,19 @@ namespace ASP_Chat.Service.Impl
 
         public async Task<string> WaitForResponseAsync(string key, string responseTopic)
         {
-            var config = new ConsumerConfig
-            {
-                BootstrapServers = _bootstrapServers,
-                GroupId = "response-consumer-group",
-                AutoOffsetReset = AutoOffsetReset.Earliest
-            };
-
-            using var consumer = new ConsumerBuilder<string, string>(config).Build();
-            consumer.Subscribe(responseTopic);
+            _consumer.Subscribe(responseTopic);
 
             var startTime = DateTime.Now;
-            while (DateTime.Now.Subtract(startTime).TotalSeconds < 60)
+            while (DateTime.Now.Subtract(startTime).TotalSeconds < 1000)
             {
-                var result = consumer.Consume();
-                if (result.Message.Key == key)
+                var result = _consumer.Consume();
+                if (result.Message.Key == key 
+                    && result.Message.Timestamp.UtcDateTime.Subtract(startTime).TotalSeconds < 1000)
                 {
+                    _consumer.Commit(result);
                     return result.Message.Value;
                 }
-                await Task.Delay(1000);
+                await Task.Delay(500);
             }
 
             throw ServerExceptionFactory.RequestTimeout();

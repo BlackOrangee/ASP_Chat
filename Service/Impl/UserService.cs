@@ -46,7 +46,7 @@ namespace ASP_Chat.Service.Impl
         public User? GetUserByUsername(string username)
         {
             _logger.LogDebug("Getting user with username: {Username}", username);
-            return _context.Users.FirstOrDefault(u => u.Username == username);
+            return _context.Users.Include(u => u.Image).FirstOrDefault(u => u.Username == username);
         }
 
         public HashSet<User> GetUsersByUsername(string username)
