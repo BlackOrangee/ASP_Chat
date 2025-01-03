@@ -99,12 +99,18 @@ namespace ASP_Chat.Entity
 
         public bool IsUserHavePermissionToSendMessage(User user)
         {
-            if (IsChatChannel() && (!IsUserModerator(user) || !IsUserAdmin(user)))
+            Console.WriteLine("IsUserHavePermissionToSendMessage " + IsChatChannel() + " " + IsUserModerator(user) + " " + IsUserAdmin(user));
+            if (!IsChatChannel())
             {
-                return false;
+                return true;
+            }
+            
+            if (IsChatChannel() && (IsUserModerator(user) || IsUserAdmin(user)))
+            {
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         public void UpdateFieldsIfExists(ChatUpdateRequest request)
@@ -185,7 +191,7 @@ namespace ASP_Chat.Entity
 
             if (lastMessageId != null)
             {
-                return Messages.Where(m => m.Id > lastMessageId).ToHashSet();
+                return Messages.Where(m => m.Id >= lastMessageId).ToHashSet();
             }
 
             return Messages.ToHashSet();
