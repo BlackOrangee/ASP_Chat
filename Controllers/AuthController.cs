@@ -36,7 +36,7 @@ namespace ASP_Chat.Controllers
         public IActionResult Login([FromBody] AuthLoginRequest request)
         {
             _logger.LogInformation("Username: {Username}. Try to login.", request.Username);
-            return Ok(new ApiResponse(data: new { token = _authService.Login(request) }));
+            return Ok(new ApiResponse(data: _authService.Login(request)));
         }
 
         [Authorize]

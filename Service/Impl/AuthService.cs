@@ -1,4 +1,5 @@
 ﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using Microsoft.AspNetCore.Identity;
@@ -35,7 +36,7 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
-        public string Login(AuthLoginRequest request)
+        public LoginResponse Login(AuthLoginRequest request)
         {
             _logger.LogDebug("Username: {Username}. Try to login.", request.Username);
 
@@ -52,7 +53,10 @@ namespace ASP_Chat.Service.Impl
                 throw ServerExceptionFactory.InvalidCredentials();
             }
 
-            return _jwtService.GenerateJwtToken(user.Id.ToString());
+            return LoginResponse.Create(
+                    _jwtService.GenerateJwtToken(user.Id.ToString()),
+                    user
+                );
         }
 
         public string Register(AuthRegisterRequest request)

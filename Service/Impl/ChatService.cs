@@ -26,11 +26,15 @@ namespace ASP_Chat.Service.Impl
 
         private Chat GetChat(long id)
         {
-            Chat? chat = _context.Chats.Include(c => c.Type)
-                                        .Include(c => c.Users)
-                                        .Include(c => c.Moderators)
-                                        .Include(c => c.Messages)
-                                        .FirstOrDefault(c => c.Id == id);
+            Chat? chat = _context.Chats
+                                    .AsSplitQuery()
+                                    .Include(c => c.Type)
+                                    .Include(c => c.Users)
+                                    .Include(c => c.Moderators)
+                                    .Include(c => c.Messages)
+                                    .Include(c => c.Image)
+                                    .FirstOrDefault(c => c.Id == id);
+
             if (chat == null)
             {
                 throw ServerExceptionFactory.ChatNotFound();
@@ -316,9 +320,12 @@ namespace ASP_Chat.Service.Impl
         {
             _logger.LogDebug("Getting chats with user id: {UserId}", userId);
             User user = _userService.GetUserById(userId);
-            HashSet<Chat> userChats = _context.Chats.Include(c => c.Type)
-                                                    .Where(c => c.Users.Contains(user)).ToHashSet();
-
+            HashSet<Chat> userChats = _context.Chats
+                                                .Include(c => c.Type)
+                                                .Include(c => c.Users)
+                                                .Include(c => c.Image)
+                                                .Where(c => c.Users.Contains(user))
+                                              .ToHashSet();
             return userChats;
         }
 

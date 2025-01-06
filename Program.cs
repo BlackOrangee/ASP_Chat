@@ -1,4 +1,3 @@
-using System.Text;
 using ASP_Chat;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 DotNetEnv.Env.Load();
 
@@ -36,25 +36,36 @@ if (string.IsNullOrEmpty(secretKey))
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ApplicationDBContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)), ServiceLifetime.Scoped);
 
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
-    containerBuilder.RegisterType<AuthService>().As<IAuthService>().SingleInstance();
-    containerBuilder.RegisterType<UserService>().As<IUserService>().SingleInstance();
-    containerBuilder.RegisterType<ChatService>().As<IChatService>().SingleInstance();
-    containerBuilder.RegisterType<MessageService>().As<IMessageService>().SingleInstance();
-    containerBuilder.RegisterType<JwtService>().As<IJwtService>().SingleInstance();
+    containerBuilder.RegisterType<AuthService>().As<IAuthService>().InstancePerLifetimeScope();
+    containerBuilder.RegisterType<UserService>().As<IUserService>().InstancePerLifetimeScope();
+    containerBuilder.RegisterType<ChatService>().As<IChatService>().InstancePerLifetimeScope();
+    containerBuilder.RegisterType<MessageService>().As<IMessageService>().InstancePerLifetimeScope();
+    containerBuilder.RegisterType<JwtService>().As<IJwtService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<PasswordHasher<User>>().As<IPasswordHasher<User>>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<KafkaService>()
                     .As<IKafkaService>()
                     .WithParameter("bootstrapServers", bootstrapServers)
-                    .SingleInstance();
-    containerBuilder.RegisterType<MediaService>().As<IMediaService>().SingleInstance();
+                    .InstancePerLifetimeScope();
+    containerBuilder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -91,6 +102,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"Could not connect to database. Message: {ex.Message}");
     }
 }
+
+app.UseCors("AllowSpecificOrigin");
 
 app.UseMiddleware<ServerExceptionMiddleware>();
 

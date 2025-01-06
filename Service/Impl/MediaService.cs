@@ -1,8 +1,8 @@
-﻿using System.Security.Cryptography;
-using ASP_Chat.Entity;
+﻿using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using ASP_Chat.Service.Requests;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -32,7 +32,7 @@ namespace ASP_Chat.Service.Impl
 
             string hash = GenerateHash(fileDataBytes);
             string fileExtension = Path.GetExtension(fileData.FileName);
-            string uniqueFileName = $"{hash}{fileExtension}";
+            string uniqueFileName = $"{hash}{DateTime.Now.Ticks}{fileExtension}";
 
             string path = $"{className}/{idValue}/{uniqueFileName}";
 
@@ -77,20 +77,21 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
-        public string GetFileLink(long mediaId, long userId)
+        public async Task<string> GetFileLink(long mediaId, long userId, int timeToLive)
         {
             _logger.LogDebug("Getting file link with id: {MediaId}", mediaId);
 
-            Media? media = _context.Medias.Include(m => m.Users)
-                                          .Include(m => m.Chats)
-                                          .Include(m => m.Messages)
-                                          .FirstOrDefault(m => m.Id == mediaId);
+            Media? media = await _context.Medias
+                                            .Include(m => m.Users)
+                                            .Include(m => m.Chats)
+                                            .Include(m => m.Messages)
+                                            .FirstOrDefaultAsync(m => m.Id == mediaId);
             if (media == null)
             {
                 throw ServerExceptionFactory.MediaNotFound(mediaId);
             }
 
-            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
             if (user == null)
             {
@@ -102,14 +103,15 @@ namespace ASP_Chat.Service.Impl
                 throw ServerExceptionFactory.NoPermissionToGetMediaLink();
             }
 
-            Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 try
                 {
                     await _kafkaService.SendMessageAsync(new FileRequest()
                     {
                         Operation = "Get",
-                        FileName = media.Url
+                        FileName = media.Url,
+                        LifeTime = timeToLive
                     });
                 }
                 catch (Exception ex)
@@ -118,9 +120,7 @@ namespace ASP_Chat.Service.Impl
                 }
             });
 
-            return _kafkaService.WaitForResponseAsync(media.Url, "media-responses")
-                                        .GetAwaiter()
-                                        .GetResult();
+            return await _kafkaService.WaitForResponseAsync(media.Url, "media-responses");
         }
 
         private bool IsUserCanSeeFile(Media media, User user)

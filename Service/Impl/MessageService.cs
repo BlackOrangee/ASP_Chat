@@ -2,6 +2,7 @@
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -106,7 +107,6 @@ namespace ASP_Chat.Service.Impl
 
             _context.Messages.Add(message);
             _context.SaveChanges();
-
             return message;
         }
 
