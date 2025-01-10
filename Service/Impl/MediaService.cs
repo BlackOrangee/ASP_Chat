@@ -103,6 +103,8 @@ namespace ASP_Chat.Service.Impl
                 throw ServerExceptionFactory.NoPermissionToGetMediaLink();
             }
 
+            string correlationId = Guid.NewGuid().ToString();
+
             await Task.Run(async () =>
             {
                 try
@@ -111,6 +113,7 @@ namespace ASP_Chat.Service.Impl
                     {
                         Operation = "Get",
                         FileName = media.Url,
+                        CorrelationId = correlationId,
                         LifeTime = timeToLive
                     });
                 }
@@ -120,7 +123,7 @@ namespace ASP_Chat.Service.Impl
                 }
             });
 
-            return await _kafkaService.WaitForResponseAsync(media.Url, "media-responses");
+            return await _kafkaService.WaitForResponseAsync(correlationId, "media-responses");
         }
 
         private bool IsUserCanSeeFile(Media media, User user)

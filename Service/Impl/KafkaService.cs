@@ -23,14 +23,16 @@ namespace ASP_Chat.Service.Impl
             {
                 BootstrapServers = _bootstrapServers,
                 GroupId = "response-consumer-group",
-                AutoOffsetReset = AutoOffsetReset.Earliest
+                AutoOffsetReset = AutoOffsetReset.Latest
             };
 
             _consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
+            _consumer.Subscribe("media-responses");
 
             ProducerConfig producerConfig = new ProducerConfig
             {
-                BootstrapServers = _bootstrapServers
+                BootstrapServers = _bootstrapServers,
+                EnableIdempotence = true
             };
 
             _producer = new ProducerBuilder<string, string>(producerConfig).Build();
@@ -61,18 +63,40 @@ namespace ASP_Chat.Service.Impl
 
         public async Task<string> WaitForResponseAsync(string key, string responseTopic)
         {
-            _consumer.Subscribe(responseTopic);
+            var timeout = TimeSpan.FromSeconds(100);
+            var startTime = DateTime.UtcNow;
+            Console.WriteLine("Date time utc now" + DateTime.UtcNow);
 
-            var startTime = DateTime.Now;
-            while (DateTime.Now.Subtract(startTime).TotalSeconds < 1000)
+            while (DateTime.UtcNow - startTime < timeout)
             {
-                var result = _consumer.Consume();
-                if (result.Message.Key == key 
-                    && result.Message.Timestamp.UtcDateTime.Subtract(startTime).TotalSeconds < 1000)
+                try
                 {
-                    _consumer.Commit(result);
-                    return result.Message.Value;
+                    Console.WriteLine("Try to consume");
+                    var result = _consumer.Consume(TimeSpan.FromMilliseconds(500));
+                    Console.WriteLine("Consumed");
+
+                    if (result != null && result.Message.Key == key)
+                    {
+                        Console.WriteLine("Result is not null");
+                        Console.WriteLine("Result message timestamp: " + result.Message.Timestamp.UtcDateTime.ToString("o"));
+                        Console.WriteLine("Start time: " + startTime.ToString("o"));
+                        if (result.Message.Timestamp.UtcDateTime >= startTime.AddMilliseconds(-500))
+                        {
+                            Console.WriteLine("Commit");
+                            _consumer.Commit(result);
+                            return result.Message.Value;
+                        }
+                        Console.WriteLine("Message is too old");
+                        Console.WriteLine("Result: " + result);
+                    }
+                    Console.WriteLine("Result is null");
                 }
+                catch (ConsumeException ex)
+                {
+                    _logger.LogError(ex, "Error while consuming Kafka message");
+                    throw ServerExceptionFactory.KafkaException("Error consuming response");
+                }
+
                 await Task.Delay(500);
             }
 
