@@ -15,6 +15,8 @@ namespace ASP_Chat
         public DbSet<Media> Medias { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<MediaRequest> MediaRequests { get; set; }
+        public DbSet<MediaResponse> MediaResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

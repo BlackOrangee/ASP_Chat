@@ -10,22 +10,22 @@ namespace ASP_Chat.Service.Impl
     {
         private readonly ApplicationDBContext _context;
         private readonly ILogger<MediaService> _logger;
-        private readonly IKafkaService _kafkaService;
+        private readonly ICommunicationService _communicationService;
 
         public MediaService(ApplicationDBContext context,
                             ILogger<MediaService> logger,
-                            IKafkaService kafkaProducerService)
+                            ICommunicationService communicationService)
         {
             _context = context;
             _logger = logger;
-            _kafkaService = kafkaProducerService;
+            _communicationService = communicationService;
         }
 
         public Media UploadFile<T>(IFormFile fileData, T holder) where T : class, IEntityWithId
         {
             _logger.LogDebug("Uploading file");
 
-            byte[] fileDataBytes = GetFileBytesAsync(fileData).GetAwaiter().GetResult();
+            byte[] fileDataBytes = GetFileBytesAsync(fileData);
 
             string className = typeof(T).Name;
             string idValue = holder.Id.ToString();
@@ -36,21 +36,11 @@ namespace ASP_Chat.Service.Impl
 
             string path = $"{className}/{idValue}/{uniqueFileName}";
 
-            Task.Run(async () =>
+            _communicationService.SendMessage(new FileRequest()
             {
-                try
-                {
-                    await _kafkaService.SendMessageAsync(new FileRequest()
-                    {
-                        Operation = "Save",
-                        FileName = path,
-                        FileData = Convert.ToBase64String(fileDataBytes)
-                    });
-                }
-                catch (Exception ex)
-                {
-                    ServerExceptionFactory.KafkaException(ex.Message);
-                }
+                Operation = "Save",
+                FileName = path,
+                FileData = Convert.ToBase64String(fileDataBytes)
             });
 
             return new Media()
@@ -59,11 +49,11 @@ namespace ASP_Chat.Service.Impl
             };
         }
 
-        private async Task<byte[]> GetFileBytesAsync(IFormFile file)
+        private static byte[] GetFileBytesAsync(IFormFile file)
         {
             using (var memoryStream = new MemoryStream())
             {
-                await file.CopyToAsync(memoryStream);
+                file.CopyTo(memoryStream);
                 return memoryStream.ToArray();
             }
         }
@@ -77,21 +67,20 @@ namespace ASP_Chat.Service.Impl
             }
         }
 
-        public async Task<string> GetFileLink(long mediaId, long userId, int timeToLive)
+        public string GetFileLink(long mediaId, long userId, int timeToLive)
         {
             _logger.LogDebug("Getting file link with id: {MediaId}", mediaId);
 
-            Media? media = await _context.Medias
-                                            .Include(m => m.Users)
-                                            .Include(m => m.Chats)
-                                            .Include(m => m.Messages)
-                                            .FirstOrDefaultAsync(m => m.Id == mediaId);
+            Media? media = _context.Medias.Include(m => m.Users)
+                                          .Include(m => m.Chats)
+                                          .Include(m => m.Messages)
+                                          .FirstOrDefault(m => m.Id == mediaId);
             if (media == null)
             {
                 throw ServerExceptionFactory.MediaNotFound(mediaId);
             }
 
-            User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            User? user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
             {
@@ -105,25 +94,15 @@ namespace ASP_Chat.Service.Impl
 
             string correlationId = Guid.NewGuid().ToString();
 
-            await Task.Run(async () =>
+            _communicationService.SendMessage(new FileRequest()
             {
-                try
-                {
-                    await _kafkaService.SendMessageAsync(new FileRequest()
-                    {
-                        Operation = "Get",
-                        FileName = media.Url,
-                        CorrelationId = correlationId,
-                        LifeTime = timeToLive
-                    });
-                }
-                catch (Exception ex)
-                {
-                    ServerExceptionFactory.KafkaException(ex.Message);
-                }
+                Operation = "Get",
+                FileName = media.Url,
+                CorrelationId = correlationId,
+                LifeTime = timeToLive
             });
 
-            return await _kafkaService.WaitForResponseAsync(correlationId, "media-responses");
+            return _communicationService.WaitForResponse(correlationId);
         }
 
         private bool IsUserCanSeeFile(Media media, User user)
@@ -147,20 +126,11 @@ namespace ASP_Chat.Service.Impl
         public string DeleteFile(Media media)
         {
             _logger.LogDebug("Deleting file");
-            Task.Run(async () =>
+
+            _communicationService.SendMessage(new FileRequest()
             {
-                try
-                {
-                    await _kafkaService.SendMessageAsync(new FileRequest()
-                    {
-                        Operation = "Delete",
-                        FileName = media.Url
-                    });
-                }
-                catch (Exception ex)
-                {
-                    ServerExceptionFactory.KafkaException(ex.Message);
-                }
+                Operation = "Delete",
+                FileName = media.Url
             });
 
             _context.Medias.Remove(media);
