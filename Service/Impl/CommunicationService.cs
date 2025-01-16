@@ -46,14 +46,17 @@ namespace ASP_Chat.Service.Impl
 
             while (DateTime.UtcNow - startTime < timeout)
             {
-                MediaResponse? mediaResponse = _context.MediaResponses.FirstOrDefault(r => r.Key == key && r.Done);
+                MediaResponse? mediaResponse = _context.MediaResponses.FirstOrDefault(r => r.Key == key && r.Done == false);
 
                 if (mediaResponse != null)
                 {
+                    mediaResponse.Done = true;
+                    _context.MediaResponses.Update(mediaResponse);
+                    _context.SaveChanges();
                     return mediaResponse.Data;
                 }
 
-                Thread.Sleep(100);
+                Thread.Sleep(500);
             }
 
             throw ServerExceptionFactory.RequestTimeout();

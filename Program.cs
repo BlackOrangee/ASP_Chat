@@ -6,11 +6,11 @@ using ASP_Chat.Service;
 using ASP_Chat.Service.Impl;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MySqlConnector;
 
 DotNetEnv.Env.Load();
 
@@ -79,6 +79,15 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
+
+using (var connection = new MySqlConnection(connectionString))
+{
+    connection.Open();
+    using (var command = new MySqlCommand("SELECT 1", connection))
+    {
+        command.ExecuteScalar();
+    }
+}
 
 using (var scope = app.Services.CreateScope())
 {
