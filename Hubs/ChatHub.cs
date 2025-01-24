@@ -43,7 +43,7 @@ namespace ASP_Chat.Hubs
         {
             if ( Context.User != null 
                 && Context.User.Identity != null 
-                && Context.User.Identity.IsAuthenticated == true )
+                && Context.User.Identity.IsAuthenticated )
             {
                 Claim? subClaim = Context.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub 
                                                                         || c.Type == ClaimTypes.NameIdentifier);
@@ -62,9 +62,9 @@ namespace ASP_Chat.Hubs
 
             HashSet<long> usersIds = new HashSet<long>(chat.Users.Select(u => u.Id));
 
-            foreach (long connectionId in _connections.Keys)
+            if (_connections != null)
             {
-                if (usersIds.Contains(connectionId))
+                foreach (var connectionId in _connections.Keys.Where(id => usersIds.Contains(id)))
                 {
                     await Clients.Client(_connections[connectionId]).SendAsync(type, message);
                 }
