@@ -4,7 +4,7 @@ namespace ASP_Chat.Controllers.Request
 {
     public class MessageSendRequest
     {
-        [Required(ErrorMessage = "ChatId is required")]
+        //[Required(ErrorMessage = "ChatId is required")]
         public long ChatId { get; set; }
 
         public long? ReplyMessageId { get; set; }
