@@ -1,3 +1,4 @@
+using System.Text;
 using ASP_Chat;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
@@ -9,23 +10,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using MySqlConnector;
 
 DotNetEnv.Env.Load();
 
 string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-string? bootstrapServers = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS");
-
 string? secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
 
 if (string.IsNullOrEmpty(connectionString))
 {
     throw ServerExceptionFactory.DBNotSet();
-}
-
-if (string.IsNullOrEmpty(bootstrapServers))
-{
-    throw ServerExceptionFactory.KafkaNotSet();
 }
 
 if (string.IsNullOrEmpty(secretKey))
@@ -61,10 +55,7 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterType<MessageService>().As<IMessageService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<JwtService>().As<IJwtService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<PasswordHasher<User>>().As<IPasswordHasher<User>>().InstancePerLifetimeScope();
-    containerBuilder.RegisterType<KafkaService>()
-                    .As<IKafkaService>()
-                    .WithParameter("bootstrapServers", bootstrapServers)
-                    .InstancePerLifetimeScope();
+    containerBuilder.RegisterType<CommunicationService>().As<ICommunicationService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
 });
 
@@ -88,6 +79,15 @@ builder.Services.AddAuthentication(options =>
 });
 
 var app = builder.Build();
+
+using (var connection = new MySqlConnection(connectionString))
+{
+    connection.Open();
+    using (var command = new MySqlCommand("SELECT 1", connection))
+    {
+        command.ExecuteScalar();
+    }
+}
 
 using (var scope = app.Services.CreateScope())
 {
