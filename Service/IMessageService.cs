@@ -10,6 +10,6 @@ namespace ASP_Chat.Service
         string DeleteMessage(long userId, long messageId);
         Message GetMessage(long userId, long messageId);
         ICollection<Message> GetMessages(long userId, long chatId, long? lastMessageId);
-        void SetReadedMessageStatus(long userId, long messageId);
+        Message SetReadedMessageStatus(long userId, long messageId);
     }
 }

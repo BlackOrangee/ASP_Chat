@@ -1,16 +1,18 @@
-using System.Text;
 using ASP_Chat;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
+using ASP_Chat.Hubs;
 using ASP_Chat.Service;
 using ASP_Chat.Service.Impl;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
+using System.Text;
 
 DotNetEnv.Env.Load();
 
@@ -47,6 +49,13 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddSignalR(options =>
+{
+    options.AddFilter<HubServerExceptionMiddleware>();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
+
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
     containerBuilder.RegisterType<AuthService>().As<IAuthService>().InstancePerLifetimeScope();
@@ -57,6 +66,8 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterType<PasswordHasher<User>>().As<IPasswordHasher<User>>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<CommunicationService>().As<ICommunicationService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
+
+    containerBuilder.RegisterType<ChatHub>().InstancePerLifetimeScope();
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -75,6 +86,26 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
         ClockSkew = TimeSpan.Zero
+    };
+
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Headers["Authorization"]
+                .ToString()
+                .Replace("Bearer ", "");
+
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -116,6 +147,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHub<ChatHub>("/chatHub");
 app.MapControllers();
 
 app.Run();

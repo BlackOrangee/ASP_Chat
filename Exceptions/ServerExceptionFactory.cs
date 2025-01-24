@@ -9,13 +9,6 @@
                 StatusCodes.InternalServerError);
         }
 
-        public static ServerException KafkaNotSet()
-        {
-            return new ServerException("Kafka is not set",
-                ExceptionCodes.SecretKeyNotSet,
-                StatusCodes.InternalServerError);
-        }
-
         public static ServerException DBNotSet()
         {
             return new ServerException("DB is not set",
@@ -189,13 +182,6 @@
             return new ServerException($"UniqueName {uniqueName} is taken",
                 ExceptionCodes.UniqueNameIsTaken,
                 StatusCodes.BadRequest);
-        }
-
-        public static ServerException KafkaException(string message)
-        {
-            return new ServerException(message,
-                ExceptionCodes.InternalServerError,
-                StatusCodes.InternalServerError);
         }
 
         public static ServerException MediaNotFound(long mediaId)

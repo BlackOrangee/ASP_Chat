@@ -86,7 +86,7 @@ namespace ASP_Chat.Service.Impl
             {
                 User = user,
                 Chat = chat,
-                Date = DateTime.Now,
+                Date = DateTime.UtcNow,
                 Media = new HashSet<Media>()
             };
 
@@ -138,7 +138,7 @@ namespace ASP_Chat.Service.Impl
             return chat.GetMessages(lastMessageId);
         }
 
-        public void SetReadedMessageStatus(long userId, long messageId)
+        public Message SetReadedMessageStatus(long userId, long messageId)
         {
             _logger.LogDebug("Setting message with id: {MessageId} as readed", messageId);
             Message message = GetMessage(userId, messageId);
@@ -149,6 +149,8 @@ namespace ASP_Chat.Service.Impl
                 _context.Messages.Update(message);
                 _context.SaveChanges();
             }
+
+            return message;
         }
     }
 }
