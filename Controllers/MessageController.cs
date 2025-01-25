@@ -1,6 +1,7 @@
 ﻿using ASP_Chat.Controllers.Request;
 using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service;
+using ASP_Chat.Service.Impl;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -81,6 +82,16 @@ namespace ASP_Chat.Controllers
             _logger.LogInformation("User with {Id} set readed message with id: {MessageId}", userId, id);
             _messageService.SetReadedMessageStatus(userId, id);
             return Ok(new ApiResponse(success: true));
+        }
+
+        [HttpPost("Media")]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
+        public IActionResult AttachMediaToMessage([FromHeader(Name = "Authorization")] string authorizationHeader,
+                                                                    MessageAttachMediaRequest mediaAttachRequest)
+        {
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            _logger.LogInformation("User with {Id} attach media to message with id: {MessageId}", userId, mediaAttachRequest.MessageId);
+            return Ok(new ApiResponse(data: _messageService.AttachMediaToMessage(userId, mediaAttachRequest)));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ASP_Chat.Controllers.Response;
 using Microsoft.AspNetCore.SignalR;
-using System.Text.Json;
 
 namespace ASP_Chat.Exceptions
 {
