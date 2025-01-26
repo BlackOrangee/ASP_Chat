@@ -9,6 +9,7 @@ using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
@@ -58,6 +59,8 @@ builder.Services.AddSignalR(options =>
 
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 {
+    containerBuilder.RegisterType<ChatHub>().AsSelf().InstancePerLifetimeScope();
+
     containerBuilder.RegisterType<AuthService>().As<IAuthService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<UserService>().As<IUserService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<ChatService>().As<IChatService>().InstancePerLifetimeScope();
@@ -67,7 +70,6 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     containerBuilder.RegisterType<CommunicationService>().As<ICommunicationService>().InstancePerLifetimeScope();
     containerBuilder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
 
-    containerBuilder.RegisterType<ChatHub>().InstancePerLifetimeScope();
 });
 
 builder.Services.AddEndpointsApiExplorer();

@@ -11,5 +11,6 @@ namespace ASP_Chat.Service
         Message GetMessage(long userId, long messageId);
         ICollection<Message> GetMessages(long userId, long chatId, long? lastMessageId);
         Message SetReadedMessageStatus(long userId, long messageId);
+        Task<Message> AttachMediaToMessage(long userId, MessageAttachMediaRequest mediaAttachRequest);
     }
 }

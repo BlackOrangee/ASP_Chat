@@ -13,7 +13,7 @@ namespace ASP_Chat.Hubs
     [Authorize]
     public class ChatHub : Hub
     {
-        private static readonly ConcurrentDictionary<long, string> _connections = new();
+        public static readonly ConcurrentDictionary<long, HashSet<string>> UserConnections = new();
 
         private readonly IMessageService _messageService;
         private readonly IChatService _chatService;
@@ -29,23 +29,43 @@ namespace ASP_Chat.Hubs
         public override async Task OnConnectedAsync()
         {
             _logger.LogDebug("OnConnectedAsync triggered");
-            _connections[GetUserIdFromContextToken()] = Context.ConnectionId;
+            long userId = GetUserIdFromContextToken();
+
+            var connections = UserConnections.GetOrAdd(userId, _ => new HashSet<string>());
+            lock (connections)
+            {
+                connections.Add(Context.ConnectionId);
+            }
+
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            _connections.TryRemove(GetUserIdFromContextToken(), out _);
+            long userId = GetUserIdFromContextToken();
+
+            if (UserConnections.TryGetValue(userId, out var connections))
+            {
+                lock (connections)
+                {
+                    connections.Remove(Context.ConnectionId);
+                    if (!connections.Any())
+                    {
+                        UserConnections.TryRemove(userId, out _);
+                    }
+                }
+            }
+
             await base.OnDisconnectedAsync(exception);
         }
 
         private long GetUserIdFromContextToken()
         {
-            if ( Context.User != null 
-                && Context.User.Identity != null 
-                && Context.User.Identity.IsAuthenticated == true )
+            if (Context.User != null
+                && Context.User.Identity != null
+                && Context.User.Identity.IsAuthenticated)
             {
-                Claim? subClaim = Context.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub 
+                Claim? subClaim = Context.User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub
                                                                         || c.Type == ClaimTypes.NameIdentifier);
                 if (subClaim != null)
                 {
@@ -62,12 +82,22 @@ namespace ASP_Chat.Hubs
 
             HashSet<long> usersIds = new HashSet<long>(chat.Users.Select(u => u.Id));
 
-            foreach (long connectionId in _connections.Keys)
+            List<string> connectionIds = new List<string>();
+
+            foreach (long userIdToNotify in usersIds)
             {
-                if (usersIds.Contains(connectionId))
+                if (UserConnections.TryGetValue(userIdToNotify, out var connections))
                 {
-                    await Clients.Client(_connections[connectionId]).SendAsync(type, message);
+                    lock (connections)
+                    {
+                        connectionIds.AddRange(connections);
+                    }
                 }
+            }
+
+            foreach (string connectionId in connectionIds)
+            {
+                await Clients.Client(connectionId).SendAsync(type, message);
             }
         }
 

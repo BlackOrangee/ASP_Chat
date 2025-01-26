@@ -1,8 +1,11 @@
 ﻿using ASP_Chat.Controllers.Request;
 using ASP_Chat.Entity;
 using ASP_Chat.Exceptions;
+using ASP_Chat.Hubs;
+using Autofac;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ASP_Chat.Service.Impl
 {
@@ -13,18 +16,21 @@ namespace ASP_Chat.Service.Impl
         private readonly IUserService _userService;
         private readonly IChatService _chatService;
         private readonly IMediaService _mediaService;
+        private readonly IHubContext<ChatHub> _hubContext;
 
         public MessageService(ApplicationDBContext context,
                               ILogger<MessageService> logger,
                               IUserService userService,
                               IChatService chatService,
-                              IMediaService mediaService)
+                              IMediaService mediaService,
+                              IHubContext<ChatHub> hubContext)
         {
             _context = context;
             _logger = logger;
             _userService = userService;
             _chatService = chatService;
             _mediaService = mediaService;
+            _hubContext = hubContext;
         }
 
         public string DeleteMessage(long userId, long messageId)
@@ -151,6 +157,59 @@ namespace ASP_Chat.Service.Impl
             }
 
             return message;
+        }
+
+        public async Task<Message> AttachMediaToMessage(long userId, MessageAttachMediaRequest mediaAttachRequest)
+        {
+            _logger.LogDebug("Attaching media to message with id: {MessageId}", mediaAttachRequest.MessageId);
+            User user = _userService.GetUserById(userId);
+            Message message = GetMessage(userId, mediaAttachRequest.MessageId);
+
+            if (!message.IsUserSender(user))
+            {
+                throw ServerExceptionFactory.NoPermissionToEditMessage();
+            }
+
+            Media media = _mediaService.UploadFile(mediaAttachRequest.File, message.Chat);
+
+            if (message.Media == null)
+            {
+                message.Media = new HashSet<Media>();
+            }
+
+            message.Media.Add(media);
+            _context.Messages.Update(message);
+            _context.SaveChanges();
+
+            await NotifyAllConectedUsersByChatIdAsync(user.Id, message.Chat.Id, message, "AttachMediaToMessage");
+
+            return message;
+        }
+
+        private async Task NotifyAllConectedUsersByChatIdAsync(long userId, long chatId, Message message, string type = "ReceiveMessage")
+        {
+            Chat chat = _chatService.GetChatById(userId, chatId);
+            _logger.LogDebug("Notify all conected users by chat id: {ChatId}", chat.Id);
+
+            HashSet<long> usersIds = new HashSet<long>(chat.Users.Select(u => u.Id));
+
+            List<string> connectionIds = new List<string>();
+
+            foreach (long userIdToNotify in usersIds)
+            {
+                if (ChatHub.UserConnections.TryGetValue(userIdToNotify, out var connections))
+                {
+                    lock (connections)
+                    {
+                        connectionIds.AddRange(connections);
+                    }
+                }
+            }
+
+            foreach (string connectionId in connectionIds)
+            {
+                await _hubContext.Clients.Client(connectionId).SendAsync(type, message);
+            }
         }
     }
 }

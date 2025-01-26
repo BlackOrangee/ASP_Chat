@@ -1,11 +1,14 @@
-﻿using ASP_Chat.Controllers.Response;
+﻿using ASP_Chat.Controllers.Request;
+using ASP_Chat.Controllers.Response;
 using ASP_Chat.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ASP_Chat.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Authorize]
     [ApiController]
+    [Route("api/v1/[controller]")]
     public class MediaController : ControllerBase
     {
         private readonly ILogger<MediaController> _logger;
