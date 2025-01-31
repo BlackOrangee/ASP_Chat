@@ -30,6 +30,7 @@ namespace ASP_Chat.Service.Impl
                                     .AsSplitQuery()
                                     .Include(c => c.Type)
                                     .Include(c => c.Users)
+                                    .ThenInclude(u => u.Image)
                                     .Include(c => c.Moderators)
                                     .Include(c => c.Messages)
                                     .Include(c => c.Image)
@@ -323,6 +324,7 @@ namespace ASP_Chat.Service.Impl
             HashSet<Chat> userChats = _context.Chats
                                                 .Include(c => c.Type)
                                                 .Include(c => c.Users)
+                                                .ThenInclude(u => u.Image)
                                                 .Include(c => c.Image)
                                                 .Where(c => c.Users.Contains(user))
                                               .ToHashSet();

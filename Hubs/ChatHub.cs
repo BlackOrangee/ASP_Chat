@@ -97,7 +97,7 @@ namespace ASP_Chat.Hubs
 
             foreach (string connectionId in connectionIds)
             {
-                await Clients.Client(connectionId).SendAsync(type, message);
+                await Clients.Client(connectionId).SendAsync(type, message, new { ChatId = chat.Id });
             }
         }
 
