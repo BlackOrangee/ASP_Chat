@@ -33,6 +33,7 @@ namespace ASP_Chat.Service.Impl
                                     .ThenInclude(u => u.Image)
                                     .Include(c => c.Moderators)
                                     .Include(c => c.Messages)
+                                    .ThenInclude(m => m.Media)
                                     .Include(c => c.Image)
                                     .FirstOrDefault(c => c.Id == id);
 
