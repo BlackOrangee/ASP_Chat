@@ -52,7 +52,9 @@ namespace ASP_Chat.Service.Impl
         public HashSet<User> GetUsersByUsername(string username)
         {
             _logger.LogDebug("Getting users with same username: {Username}", username);
-            return _context.Users.Where(u => u.Username.Contains(username)).ToHashSet();
+            return _context.Users.Where(u => u.Username.Contains(username))
+                                 .Include(u => u.Image)
+                                 .ToHashSet();
         }
 
         public User UpdateUser(long userId, UserUpdateRequest request)
