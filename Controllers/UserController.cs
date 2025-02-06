@@ -34,10 +34,12 @@ namespace ASP_Chat.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public IActionResult GetUsersByUsername([FromQuery] string username)
+        public IActionResult GetUsersByUsername([FromQuery] string username,
+                                        [FromHeader(Name = "Authorization")] string authorizationHeader)
         {
             _logger.LogInformation("Getting users with username: {Username}", username);
-            return Ok(new ApiResponse(data: _userService.GetUsersByUsername(username)));
+            long userId = _jwtService.GetUserIdFromToken(authorizationHeader);
+            return Ok(new ApiResponse(data: _userService.GetUsersByUsername(userId, username)));
         }
 
         [HttpPut]

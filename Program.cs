@@ -95,9 +95,7 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var accessToken = context.Request.Headers["Authorization"]
-                .ToString()
-                .Replace("Bearer ", "");
+            var accessToken = context.Request.Query["access_token"].ToString();
 
             var path = context.HttpContext.Request.Path;
 

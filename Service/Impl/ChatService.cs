@@ -2,6 +2,8 @@
 using ASP_Chat.Entity;
 using ASP_Chat.Enums;
 using ASP_Chat.Exceptions;
+using ASP_Chat.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ASP_Chat.Service.Impl
@@ -12,16 +14,19 @@ namespace ASP_Chat.Service.Impl
         private readonly ILogger<ChatService> _logger;
         private readonly IUserService _userService;
         private readonly IMediaService _mediaService;
+        private readonly IHubContext<ChatHub> _hubContext;
 
         public ChatService(ApplicationDBContext context,
                            ILogger<ChatService> logger,
                            IUserService userService,
-                           IMediaService mediaService)
+                           IMediaService mediaService,
+                           IHubContext<ChatHub> hubContext)
         {
             _context = context;
             _logger = logger;
             _userService = userService;
             _mediaService = mediaService;
+            _hubContext = hubContext;
         }
 
         private Chat GetChat(long id)
@@ -30,8 +35,10 @@ namespace ASP_Chat.Service.Impl
                                     .AsSplitQuery()
                                     .Include(c => c.Type)
                                     .Include(c => c.Users)
+                                    .ThenInclude(u => u.Image)
                                     .Include(c => c.Moderators)
                                     .Include(c => c.Messages)
+                                    .ThenInclude(m => m.Media)
                                     .Include(c => c.Image)
                                     .FirstOrDefault(c => c.Id == id);
 
@@ -168,9 +175,21 @@ namespace ASP_Chat.Service.Impl
                         throw ServerExceptionFactory.InvalidP2PChatUsersCount();
                     }
 
-                    ThrowExceptionIfP2PChatExists(usersSet);
+                    //ThrowExceptionIfP2PChatExists(usersSet);
+                    Chat? checkP2PChat = _context.Chats.Include(c => c.Type)
+                                      .Include(c => c.Users)
+                                      .FirstOrDefault(c => c.Type.Id == (long)ChatTypes.P2P
+                                                        && c.Users.Contains(usersSet.First())
+                                                        && c.Users.Contains(usersSet.Last()));
 
-                    return CreateP2PChat(chat, usersSet);
+                    if (null != checkP2PChat)
+                    {
+                        return GetChatById(userId, checkP2PChat.Id);
+                    }
+
+                    Chat p2pChat = CreateP2PChat(chat, usersSet);
+                    NotifyAllConectedUsersToNewChatAsync(userId, p2pChat.Id);
+                    return p2pChat;
                 case 2:
                     return CreateGroupChat(chat, usersSet, request);
                 case 3:
@@ -323,6 +342,7 @@ namespace ASP_Chat.Service.Impl
             HashSet<Chat> userChats = _context.Chats
                                                 .Include(c => c.Type)
                                                 .Include(c => c.Users)
+                                                .ThenInclude(u => u.Image)
                                                 .Include(c => c.Image)
                                                 .Where(c => c.Users.Contains(user))
                                               .ToHashSet();
@@ -459,6 +479,32 @@ namespace ASP_Chat.Service.Impl
             _context.SaveChanges();
 
             return "Left successfully";
+        }
+
+        private async Task NotifyAllConectedUsersToNewChatAsync(long userId, long chatId, string type = "NewChat")
+        {
+            Chat chat = GetChatById(userId, chatId);
+            _logger.LogDebug("Notify all conected users by chat id: {ChatId}", chat.Id);
+
+            HashSet<long> usersIds = new HashSet<long>(chat.Users.Select(u => u.Id));
+
+            List<string> connectionIds = new List<string>();
+
+            foreach (long userIdToNotify in usersIds)
+            {
+                if (ChatHub.UserConnections.TryGetValue(userIdToNotify, out var connections))
+                {
+                    lock (connections)
+                    {
+                        connectionIds.AddRange(connections);
+                    }
+                }
+            }
+
+            foreach (string connectionId in connectionIds)
+            {
+                await _hubContext.Clients.Client(connectionId).SendAsync(type, chat);
+            }
         }
     }
 }
