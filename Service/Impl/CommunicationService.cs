@@ -56,7 +56,7 @@ namespace ASP_Chat.Service.Impl
                     return mediaResponse.Data;
                 }
 
-                Thread.Sleep(500);
+                Thread.Sleep(300);
             }
 
             throw ServerExceptionFactory.RequestTimeout();
