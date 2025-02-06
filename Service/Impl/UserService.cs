@@ -49,10 +49,13 @@ namespace ASP_Chat.Service.Impl
             return _context.Users.Include(u => u.Image).FirstOrDefault(u => u.Username == username);
         }
 
-        public HashSet<User> GetUsersByUsername(string username)
+        public HashSet<User> GetUsersByUsername(long userId, string username)
         {
+            _logger.LogDebug("Getting users with username: {Username}", username);
+            GetUserById(userId);
+
             _logger.LogDebug("Getting users with same username: {Username}", username);
-            return _context.Users.Where(u => u.Username.Contains(username))
+            return _context.Users.Where(u => u.Username.Contains(username) && u.Id != userId)
                                  .Include(u => u.Image)
                                  .ToHashSet();
         }
