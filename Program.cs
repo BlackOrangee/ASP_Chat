@@ -19,6 +19,7 @@ DotNetEnv.Env.Load();
 
 string? connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 string? secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
+string? CORS = Environment.GetEnvironmentVariable("CORS");
 
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -28,6 +29,11 @@ if (string.IsNullOrEmpty(connectionString))
 if (string.IsNullOrEmpty(secretKey))
 {
     throw ServerExceptionFactory.SecretKeyNotSet();
+}
+
+if (string.IsNullOrEmpty(CORS))
+{
+    throw ServerExceptionFactory.CORSNotSet();
 }
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,7 +47,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(CORS)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

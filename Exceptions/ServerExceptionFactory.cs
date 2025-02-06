@@ -197,5 +197,12 @@
                 ExceptionCodes.InternalServerError,
                 StatusCodes.InternalServerError);
         }
+
+        public static ServerException CORSNotSet()
+        {
+            return new ServerException("Internal server error",
+                ExceptionCodes.InternalServerError,
+                StatusCodes.InternalServerError);
+        }
     }
 }
